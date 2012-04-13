@@ -4,10 +4,19 @@
 import threading
 
 
-__all__ = ['connect']
+__all__ = [
+    'NoContext',
+    'connect', 'transaction',
+    'execute', 'execute_many',
+    'query_row', 'query_value', 'query_column']
 
 
-class _Context(object):
+class NoContext(StandardError):
+    """You are attempting to use dbkit outside of a database context."""
+    pass
+
+
+class Context(object):
     """
     """
 
@@ -15,7 +24,7 @@ class _Context(object):
     state = threading.local()
 
     def __init__(self, module, conn):
-        super(_Context, self).__init__()
+        super(Context, self).__init__()
         self.module = module
         self.conn = conn
 
@@ -50,7 +59,7 @@ def connect(module, *args, **kwargs):
     """
     """
     conn = module.connect(*args, **kwargs)
-    return _Context(module, conn)
+    return Context(module, conn)
 
 def transaction():
     """
@@ -77,7 +86,7 @@ def query_value(query, args):
     """
     pass
 
-def query_row(query, args):
+def query_column(query, args):
     """
     """
     pass
