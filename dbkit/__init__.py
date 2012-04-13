@@ -28,6 +28,8 @@ class Context(object):
         self.module = module
         self.conn = conn
 
+    # Context stack management {{{
+
     def __enter__(self):
         self._push_context(self)
 
@@ -53,6 +55,15 @@ class Context(object):
     @classmethod
     def _current(cls):
         return cls.state.__dict__.setdefault('current', None)
+
+    # }}}
+
+    def close(self):
+        try:
+            self.conn.close()
+        finally:
+            self.conn = None
+            self.module = None
 
 
 def connect(module, *args, **kwargs):
