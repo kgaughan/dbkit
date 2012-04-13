@@ -1,0 +1,8 @@
+# General detritus
+*~
+.*.sw?
+# Python detritus
+*.py[oc]
+# Package-building detritus
+/build
+/dist

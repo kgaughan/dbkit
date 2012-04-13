@@ -2,6 +2,13 @@
 dbkit
 =====
 
+:Author:
+    Keith Gaughan (http://stereochro.me)
+
+:Repo:
+    https://github.com/kgaughan/dbkit
+
+
 **dbkit** is intended to be a library to abstract away at least part of
 the pain involved in dealing with `DB-API 2`_ compatible database
 drivers.
@@ -88,6 +95,7 @@ needed.
    `descriptors`_, descriptors only work with classes, not modules, to
    the best of my knowledge. I could very easily be wrong here, and
    rather hope I am!
+
 
 .. _DB-API 2: http://www.python.org/dev/peps/pep-0249/
 .. _SQLObject: http://sqlobject.org/
