@@ -44,7 +44,7 @@ class Context(object):
 
     @classmethod
     def _pop_context(cls):
-        if cls._current() is not None:
+        if cls.current(with_exception=False) is not None:
             stack = cls.state.stack
             stack.pop()
             if len(stack) == 0:
@@ -53,8 +53,11 @@ class Context(object):
                 cls.state.current = stack[len(stack) - 1]
 
     @classmethod
-    def _current(cls):
-        return cls.state.__dict__.setdefault('current', None)
+    def current(cls, with_exception=True):
+        current = cls.state.__dict__.setdefault('current', None)
+        if with_exception and current is None:
+            raise NoContext()
+        return current
 
     # }}}
 
