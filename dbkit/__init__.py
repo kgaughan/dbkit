@@ -1,6 +1,7 @@
 """
 """
 
+import contextlib
 import threading
 
 
@@ -20,13 +21,14 @@ class Context(object):
     """
     """
 
-    __slots__ = ['module', 'conn']
+    __slots__ = ['module', 'conn', 'depth']
     state = threading.local()
 
     def __init__(self, module, conn):
         super(Context, self).__init__()
         self.module = module
         self.conn = conn
+        self.depth = 0
 
     # Context stack management {{{
 
@@ -75,10 +77,28 @@ def connect(module, *args, **kwargs):
     conn = module.connect(*args, **kwargs)
     return Context(module, conn)
 
+@contextmanager
 def transaction():
     """
+    Sets up a context where all the statements within it are ran within a
+    single database transaction.
     """
-    pass
+    ctx = Context.current()
+
+    # The idea here is to fake the nesting of transactions. Only when we've
+    # gotten back to the topmost transaction context do we actually commit
+    # or rollback.
+    try:
+        ctx.depth += 1
+        yield ctx
+        ctx.depth -= 1
+    except:
+        cxt.depth -= 1
+        if ctx.depth == 0:
+            ctx.conn.rollback()
+        raise
+    if ctx.depth == 0:
+        ctx.conn.commit()
 
 def execute(query, args):
     """
