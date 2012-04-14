@@ -1,4 +1,10 @@
 """
+**dbkit** is a simple high-level database abstraction library for use on
+top of DB-API 2 compatible database driver modules. It is intended to be
+used in circumstances where it would be impractical or overkill to use an
+ORM such as SQLAlchemy or SQLObject, but would be useful to abstract away
+much of the boilerplate involved in dealing with DB-API 2 compatible
+database drivers.
 """
 
 import contextlib
@@ -12,18 +18,24 @@ __all__ = [
 
 
 class NoContext(StandardError):
-    """You are attempting to use dbkit outside of a database context."""
+    """
+    You are attempting to use dbkit outside of a database context.
+    """
     pass
 
 
 class Context(object):
     """
+    A database connection context.
     """
 
     __slots__ = ['module', 'conn', 'depth']
     state = threading.local()
 
     def __init__(self, module, conn):
+        """
+        Initialise a context with a given driver module and connection.
+        """
         super(Context, self).__init__()
         self.module = module
         self.conn = conn
@@ -55,6 +67,7 @@ class Context(object):
 
     @classmethod
     def current(cls, with_exception=True):
+        """Returns the current database context."""
         current = cls.state.__dict__.setdefault('current', None)
         if with_exception and current is None:
             raise NoContext()
@@ -63,7 +76,10 @@ class Context(object):
     # }}}
 
     @classmethod
-    def execute(cls, query, args)
+    def execute(cls, query, args):
+        """
+        Execute a query, returning a cursor. For internal use only.
+        """
         ctx = cls.current()
         cursor = ctx.conn.cursor()
         try:
@@ -74,6 +90,9 @@ class Context(object):
         return cursor
 
     def close(self):
+        """
+        Close the connection this context wraps.
+        """
         try:
             self.conn.close()
         finally:
@@ -83,6 +102,7 @@ class Context(object):
 
 def connect(module, *args, **kwargs):
     """
+    Connect to a database using the given DB-API driver module.
     """
     conn = module.connect(*args, **kwargs)
     return Context(module, conn)
@@ -112,11 +132,13 @@ def transaction():
 
 def execute(query, args):
     """
+    Execute a query. This returns an iterator of the result set.
     """
     return _result_set(Context.execute(query, args))
 
 def query_row(query, args):
     """
+    Execute a query. Returns the first row of the result set, or None.
     """
     cursor = Context.execute(query, args)
     try:
@@ -127,6 +149,9 @@ def query_row(query, args):
 
 def query_value(query, args, default=None):
     """
+    Execute a query, returning the first value in the first row of the
+    result set. If the query returns no result set, a default value is
+    returned, which is `None` by default.
     """
     row = query_row(query, args)
     if row is None:
@@ -135,11 +160,14 @@ def query_value(query, args, default=None):
 
 def query_column(query, args):
     """
+    Execute a query, returning an iterable of the first column.
     """
     return _column_set(Context.execute(query, args))
 
 def _result_set(cursor):
-    """Iterator over a statement's results."""
+    """
+    Iterator over a statement's results.
+    """
     while True:
         row = cursor.fetchone()
         if row is None:
@@ -148,7 +176,9 @@ def _result_set(cursor):
     cursor.close()
 
 def _column_set(cursor):
-    """Iterator over a statement's results."""
+    """
+    Iterator over a statement's results.
+    """
     while True:
         row = cursor.fetchone()
         if row is None:
