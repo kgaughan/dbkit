@@ -62,9 +62,9 @@ module's ``connect()`` function, which will work something like this:
 A database context contains little or no actual information that's
 useful or usable to anything outside of *dbkit* itself; it simply
 maintains a reference to the driver module and the connection, provides
-a ``close()`` method for use with ```contextlib.closing()```_, and the
-magic methods necessary for implementing a context manager. It contains
-very little intelligence.
+a ``close()`` method for use with *contextlib*'s ``closing()`` context
+manager, and the magic methods necessary for implementing a context
+manager. It contains very little intelligence.
 
 The module maintains a per-thread stack of database contexts. When you
 use a database context with the ``with`` statement, that context is
@@ -80,15 +80,13 @@ This method of doing things has several key advantages:
 
 Additionally, the module will have a context manager function called
 ``transaction()`` for enclosing statements to be ran in a single
-transaction. It will also have functions exposing the following DB-API
-cursor methods ``execute()`` and ``executemany()`` (renamed
-``execute_many()``). Additionally, it will have a number of query helper
-methods such as ``query_row()`` (returns the first row only),
+transaction. It will also have functions exposing the DB-API cursor
+method ``execute()``.  Additionally, it will have a number of query
+helper methods such as ``query_row()`` (returns the first row only),
 ``query_value()`` (returns the first field of the first row),
-``query_column()`` (returns an iterable of the values in the first
-column of the resultset). Cursors will be abstracted away behind some
-form of iterable object that will expose whatever functionality is
-needed.
+``query_column()`` (returns an iterable of the values in the first column
+of the resultset). Cursors will be abstracted away behind some form of
+iterable object that will expose whatever functionality is needed.
 
 .. [1]
    While the ideal way would be to expose these using something akin to
@@ -102,5 +100,4 @@ needed.
 .. _SQLAlchemy: http://sqlalchemy.org/
 .. _DBUtils: http://pypi.python.org/pypi/DBUtils/1.1
 .. _context managers: http://docs.python.org/library/contextlib.html
-.. _``contextlib.closing()``: http://docs.python.org/library/contextlib.html#contextlib.closing
 .. _descriptors: http://docs.python.org/howto/descriptor.html
