@@ -107,7 +107,7 @@ def connect(module, *args, **kwargs):
     conn = module.connect(*args, **kwargs)
     return Context(module, conn)
 
-@contextmanager
+@contextlib.contextmanager
 def transaction():
     """
     Sets up a context where all the statements within it are ran within a
