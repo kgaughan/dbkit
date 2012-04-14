@@ -168,22 +168,26 @@ def _result_set(cursor):
     """
     Iterator over a statement's results.
     """
-    while True:
-        row = cursor.fetchone()
-        if row is None:
-            break
-        yield row
-    cursor.close()
+    try:
+        while True:
+            row = cursor.fetchone()
+            if row is None:
+                break
+            yield row
+    finally:
+        cursor.close()
 
 def _column_set(cursor):
     """
     Iterator over a statement's results.
     """
-    while True:
-        row = cursor.fetchone()
-        if row is None:
-            break
-        yield row[0]
-    cursor.close()
+    try:
+        while True:
+            row = cursor.fetchone()
+            if row is None:
+                break
+            yield row[0]
+    finally:
+        cursor.close()
 
 # vim:set et ai:
