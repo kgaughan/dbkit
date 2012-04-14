@@ -8,8 +8,7 @@ import threading
 __all__ = [
     'NoContext',
     'connect', 'transaction',
-    'execute', 'execute_many',
-    'query_row', 'query_value', 'query_column']
+    'execute', 'query_row', 'query_value', 'query_column']
 
 
 class NoContext(StandardError):
@@ -63,6 +62,17 @@ class Context(object):
 
     # }}}
 
+    @classmethod
+    def execute(cls, query, args)
+        ctx = cls.current()
+        cursor = ctx.conn.cursor()
+        try:
+            cursor.execute(query, args)
+        except:
+            cursor.close()
+            raise
+        return cursor
+
     def close(self):
         try:
             self.conn.close()
@@ -103,26 +113,47 @@ def transaction():
 def execute(query, args):
     """
     """
-    pass
-
-def execute_many():
-    """
-    """
-    pass
+    return _result_set(Context.execute(query, args))
 
 def query_row(query, args):
     """
     """
-    pass
+    cursor = Context.execute(query, args)
+    try:
+        row = cursor.fetchone()
+    finally:
+        cursor.close()
+    return row
 
-def query_value(query, args):
+def query_value(query, args, default=None):
     """
     """
-    pass
+    row = query_row(query, args)
+    if row is None:
+       return default
+    return row[0]
 
 def query_column(query, args):
     """
     """
-    pass
+    return _column_set(Context.execute(query, args))
+
+def _result_set(cursor):
+    """Iterator over a statement's results."""
+    while True:
+        row = cursor.fetchone()
+        if row is None:
+            break
+        yield row
+    cursor.close()
+
+def _column_set(cursor):
+    """Iterator over a statement's results."""
+    while True:
+        row = cursor.fetchone()
+        if row is None:
+            break
+        yield row[0]
+    cursor.close()
 
 # vim:set et ai:
