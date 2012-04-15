@@ -44,7 +44,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['module', 'conn', 'depth'] + _EXCEPTIONS
+    __slots__ = ['_module', '_conn', '_depth'] + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, conn):
@@ -52,9 +52,9 @@ class Context(object):
         Initialise a context with a given driver module and connection.
         """
         super(Context, self).__init__()
-        self.module = module
-        self.conn = conn
-        self.depth = 0
+        self._module = module
+        self._conn = conn
+        self._depth = 0
         # Copy driver module's exception references.
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
@@ -99,7 +99,7 @@ class Context(object):
         Execute a query, returning a cursor. For internal use only.
         """
         ctx = cls.current()
-        cursor = ctx.conn.cursor()
+        cursor = ctx._conn.cursor()
         try:
             cursor.execute(query, args)
         except:
@@ -112,10 +112,10 @@ class Context(object):
         Close the connection this context wraps.
         """
         try:
-            self.conn.close()
+            self._conn.close()
         finally:
-            self.conn = None
-            self.module = None
+            self._conn = None
+            self._module = None
             # Clear exception references.
             for exc in _EXCEPTIONS:
                 setattr(self, exc, None)
@@ -147,16 +147,16 @@ def transaction():
     # gotten back to the topmost transaction context do we actually commit
     # or rollback.
     try:
-        ctx.depth += 1
+        ctx._depth += 1
         yield ctx
-        ctx.depth -= 1
+        ctx._depth -= 1
     except:
-        cxt.depth -= 1
-        if ctx.depth == 0:
-            ctx.conn.rollback()
+        cxt._depth -= 1
+        if ctx._depth == 0:
+            ctx._conn.rollback()
         raise
-    if ctx.depth == 0:
-        ctx.conn.commit()
+    if ctx._depth == 0:
+        ctx._conn.commit()
 
 def execute(query, args):
     """
