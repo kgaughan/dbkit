@@ -6,11 +6,6 @@ Rows:
    support dicts too, or, better yet, somethin akin to the sqlite3
    module's Row() factory.
 
-Result generators:
- - Because they're currently functions, the result generators lack some
-   functionality that would be nice to have, such as being able to access
-   row count and the current row number.
-
 Other missing functionality:
  - Support for callproc, executemany, nextset.
  - Is there any sense in supporting Two-Phase Commit?
