@@ -48,7 +48,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['_module', '_conn', '_depth', '_log'] + _EXCEPTIONS
+    __slots__ = ['module', 'conn', 'depth', 'log'] + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, conn):
@@ -56,10 +56,10 @@ class Context(object):
         Initialise a context with a given driver module and connection.
         """
         super(Context, self).__init__()
-        self._module = module
-        self._conn = conn
-        self._depth = 0
-        self._log = null_logger
+        self.module = module
+        self.conn = conn
+        self.depth = 0
+        self.log = null_logger
         # Copy driver module's exception references.
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
@@ -75,12 +75,14 @@ class Context(object):
 
     @classmethod
     def _push_context(cls, ctx):
+        """Push a context onto the context stack."""
         cls.state.__dict__.setdefault('stack', [])
         cls.state.stack.append(ctx)
         cls.state.current = ctx
 
     @classmethod
     def _pop_context(cls):
+        """Pop the topmost context from the context stack."""
         if cls.current(with_exception=False) is not None:
             stack = cls.state.stack
             stack.pop()
@@ -102,15 +104,15 @@ class Context(object):
     # }}}
 
     @classmethod
-    def execute(cls, query, args):
+    def execute(cls, stmt, args):
         """
         Execute a query, returning a cursor. For internal use only.
         """
         ctx = cls.current()
-        ctx._log(query, args)
-        cursor = ctx._conn.cursor()
+        ctx.log(stmt, args)
+        cursor = ctx.conn.cursor()
         try:
-            cursor.execute(query, args)
+            cursor.execute(stmt, args)
         except:
             cursor.close()
             raise
@@ -121,12 +123,12 @@ class Context(object):
         Close the connection this context wraps.
         """
         try:
-            self._conn.close()
+            self.conn.close()
         finally:
             # Clear references to let the garbage collector do its job.
-            self._conn = None
-            self._module = None
-            self._log = None
+            self.conn = None
+            self.module = None
+            self.log = None
             for exc in _EXCEPTIONS:
                 setattr(self, exc, None)
 
@@ -156,7 +158,7 @@ def set_logger(logger):
     There are two supplied logging functions: `null_logger` logs nothing,
     while `stderr_logger` logs its arguments to stderr.
     """
-    Context.current()._log = logger
+    Context.current().log = logger
 
 @contextlib.contextmanager
 def transaction():
@@ -170,56 +172,56 @@ def transaction():
     # gotten back to the topmost transaction context do we actually commit
     # or rollback.
     try:
-        ctx._depth += 1
+        ctx.depth += 1
         yield ctx
-        ctx._depth -= 1
+        ctx.depth -= 1
     except:
-        ctx._depth -= 1
-        if ctx._depth == 0:
-            ctx._conn.rollback()
+        ctx.depth -= 1
+        if ctx.depth == 0:
+            ctx.conn.rollback()
         raise
-    if ctx._depth == 0:
-        ctx._conn.commit()
+    if ctx.depth == 0:
+        ctx.conn.commit()
 
-def execute(query, args=()):
+def execute(stmt, args=()):
     """
     Execute an SQL statement.
     """
-    Context.execute(query, args).close()
+    Context.execute(stmt, args).close()
 
-def query(query, args=()):
+def query(stmt, args=()):
     """
     Execute a query. This returns an iterator of the result set.
     """
-    return _result_set(Context.execute(query, args))
+    return _result_set(Context.execute(stmt, args))
 
-def query_row(query, args=()):
+def query_row(stmt, args=()):
     """
     Execute a query. Returns the first row of the result set, or None.
     """
-    cursor = Context.execute(query, args)
+    cursor = Context.execute(stmt, args)
     try:
         row = cursor.fetchone()
     finally:
         cursor.close()
     return row
 
-def query_value(query, args=(), default=None):
+def query_value(stmt, args=(), default=None):
     """
     Execute a query, returning the first value in the first row of the
     result set. If the query returns no result set, a default value is
     returned, which is `None` by default.
     """
-    row = query_row(query, args)
+    row = query_row(stmt, args)
     if row is None:
-       return default
+        return default
     return row[0]
 
-def query_column(query, args=()):
+def query_column(stmt, args=()):
     """
     Execute a query, returning an iterable of the first column.
     """
-    return _column_set(Context.execute(query, args))
+    return _column_set(Context.execute(stmt, args))
 
 # Result generators {{{
 
@@ -253,14 +255,14 @@ def _column_set(cursor):
 
 # Utility functions {{{
 
-def unindent_statement(query):
+def unindent_statement(stmt):
     """
     Strips leading whitespace from a query based on the indentation
     of the first non-empty line.
 
     This is for use in logging functions for cleaning up query formatting.
     """
-    lines = query.split("\n")
+    lines = stmt.split("\n")
     prefix = 0
     for line in lines:
         stripped = line.lstrip()
@@ -273,19 +275,19 @@ def unindent_statement(query):
 
 # Logging support {{{
 
-def null_logger(_query, _args):
+def null_logger(_stmt, _args):
     """
     A logger that discards everything sent to it.
     """
     pass
 
-def stderr_logger(query, args):
+def stderr_logger(stmt, args):
     """
     A logger that logs everything sent to it to standard error.
     """
     now = datetime.datetime.now()
     print >> sys.stderr, "Query (%s):" % now.isoformat()
-    print >> sys.stderr, unindent_statement(query)
+    print >> sys.stderr, unindent_statement(stmt)
     print >> sys.stderr, "Arguments:"
     pprint.pprint(args, sys.stderr)
 
