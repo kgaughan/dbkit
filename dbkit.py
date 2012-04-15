@@ -183,6 +183,12 @@ def transaction():
 
 def execute(query, args=()):
     """
+    Execute an SQL statement.
+    """
+    Context.execute(query, args).close()
+
+def query(query, args=()):
+    """
     Execute a query. This returns an iterator of the result set.
     """
     return _result_set(Context.execute(query, args))
