@@ -123,7 +123,8 @@ class Context(object):
 
 def connect(module, *args, **kwargs):
     """
-    Connect to a database using the given DB-API driver module.
+    Connect to a database using the given DB-API driver module. Returns
+    a database context representing that connection.
     """
     conn = module.connect(*args, **kwargs)
     return Context(module, conn)
