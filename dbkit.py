@@ -180,13 +180,13 @@ def transaction():
     if ctx._depth == 0:
         ctx._conn.commit()
 
-def execute(query, args):
+def execute(query, args=()):
     """
     Execute a query. This returns an iterator of the result set.
     """
     return _result_set(Context.execute(query, args))
 
-def query_row(query, args):
+def query_row(query, args=()):
     """
     Execute a query. Returns the first row of the result set, or None.
     """
@@ -197,7 +197,7 @@ def query_row(query, args):
         cursor.close()
     return row
 
-def query_value(query, args, default=None):
+def query_value(query, args=(), default=None):
     """
     Execute a query, returning the first value in the first row of the
     result set. If the query returns no result set, a default value is
@@ -208,7 +208,7 @@ def query_value(query, args, default=None):
        return default
     return row[0]
 
-def query_column(query, args):
+def query_column(query, args=()):
     """
     Execute a query, returning an iterable of the first column.
     """
