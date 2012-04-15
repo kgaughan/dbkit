@@ -68,6 +68,7 @@ class Context(object):
 
     def __enter__(self):
         self._push_context(self)
+        return self
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
         self._pop_context()
@@ -173,7 +174,7 @@ def transaction():
         yield ctx
         ctx._depth -= 1
     except:
-        cxt._depth -= 1
+        ctx._depth -= 1
         if ctx._depth == 0:
             ctx._conn.rollback()
         raise
