@@ -218,4 +218,22 @@ def _column_set(cursor):
     finally:
         cursor.close()
 
+# Utility functions {{{
+
+def unindent_statement(query):
+    """
+    Strips leading whitespace from a query based on the indentation
+    of the first non-empty line.
+    """
+    lines = query.split("\n")
+    prefix = 0
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped != '':
+            prefix = len(line) - len(stripped)
+            break
+    return "\n".join([line[prefix:] for line in lines])
+
+# }}}
+
 # vim:set et ai:
