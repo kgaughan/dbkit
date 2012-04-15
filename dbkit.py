@@ -24,7 +24,6 @@ __all__ = [
 
 # DB-API 2 exceptions exposed by all drivers.
 _EXCEPTIONS = [
-    'StandardError',
     'Warning',
     'Error',
     'InterfaceError',
