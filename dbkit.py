@@ -85,7 +85,9 @@ class Context(object):
 
     @classmethod
     def current(cls, with_exception=True):
-        """Returns the current database context."""
+        """
+        Returns the current database context.
+        """
         current = cls.state.__dict__.setdefault('current', None)
         if with_exception and current is None:
             raise NoContext()
@@ -192,6 +194,8 @@ def query_column(query, args):
     """
     return _column_set(Context.execute(query, args))
 
+# Result generators {{{
+
 def _result_set(cursor):
     """
     Iterator over a statement's results.
@@ -217,6 +221,8 @@ def _column_set(cursor):
             yield row[0]
     finally:
         cursor.close()
+
+# }}}
 
 # Utility functions {{{
 
