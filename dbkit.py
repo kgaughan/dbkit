@@ -17,6 +17,21 @@ __all__ = [
     'execute', 'query_row', 'query_value', 'query_column']
 
 
+# DB-API 2 exceptions exposed by all drivers.
+_EXCEPTIONS = [
+    'StandardError',
+    'Warning',
+    'Error',
+    'InterfaceError',
+    'DatabaseError',
+    'DataError',
+    'OperationalError',
+    'IntegrityError',
+    'InternalError',
+    'ProgrammingError',
+    'NotSupportedError']
+
+
 class NoContext(StandardError):
     """
     You are attempting to use dbkit outside of a database context.
@@ -29,7 +44,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['module', 'conn', 'depth']
+    __slots__ = ['module', 'conn', 'depth'] + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, conn):
@@ -40,6 +55,9 @@ class Context(object):
         self.module = module
         self.conn = conn
         self.depth = 0
+        # Copy driver module's exception references.
+        for exc in _EXCEPTIONS:
+            setattr(self, exc, getattr(module, exc))
 
     # Context stack management {{{
 
@@ -98,6 +116,9 @@ class Context(object):
         finally:
             self.conn = None
             self.module = None
+            # Clear exception references.
+            for exc in _EXCEPTIONS:
+                setattr(self, exc, None)
 
 
 def connect(module, *args, **kwargs):
@@ -106,6 +127,12 @@ def connect(module, *args, **kwargs):
     """
     conn = module.connect(*args, **kwargs)
     return Context(module, conn)
+
+def context():
+    """
+    Returns the current database context.
+    """
+    return Context.current()
 
 @contextlib.contextmanager
 def transaction():
