@@ -1,11 +1,21 @@
 How should logging be implemented?
-
  - Boolean property on the context?
  - If logging is one, should it just print to stderr or do more?
  - Or should we have a callback function that does the work?
 
 Test suite:
-
  - Build this on top of the sqlite3 driver in the standard library.
 
+Rows:
+ - Currently only tuple-style rows are supported. It would be nice to
+   support dicts too, or, better yet, somethin akin to the sqlite3
+   module's Row() factory.
 
+Result generators:
+ - Because they're currently functions, the result generators lack some
+   functionality that would be nice to have, such as being able to access
+   row count and the current row number.
+
+Other missing functionality:
+ - Support for callproc, executemany, nextset.
+ - Is there any sense in supporting Two-Phase Commit?
