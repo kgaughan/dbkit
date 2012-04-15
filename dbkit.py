@@ -8,13 +8,18 @@ database drivers.
 """
 
 import contextlib
+import datetime
+import pprint
+import sys
 import threading
 
 
 __all__ = [
     'NoContext',
-    'connect', 'transaction',
-    'execute', 'query_row', 'query_value', 'query_column']
+    'connect', 'context', 'transaction', 'set_logger',
+    'execute', 'query_row', 'query_value', 'query_column',
+    'unindent_statement',
+    'null_logger', 'stderr_logger']
 
 
 # DB-API 2 exceptions exposed by all drivers.
@@ -44,7 +49,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['_module', '_conn', '_depth'] + _EXCEPTIONS
+    __slots__ = ['_module', '_conn', '_depth', '_log'] + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, conn):
@@ -55,6 +60,7 @@ class Context(object):
         self._module = module
         self._conn = conn
         self._depth = 0
+        self._log = null_logger
         # Copy driver module's exception references.
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
@@ -101,6 +107,7 @@ class Context(object):
         Execute a query, returning a cursor. For internal use only.
         """
         ctx = cls.current()
+        ctx._log(query, args)
         cursor = ctx._conn.cursor()
         try:
             cursor.execute(query, args)
@@ -116,9 +123,10 @@ class Context(object):
         try:
             self._conn.close()
         finally:
+            # Clear references to let the garbage collector do its job.
             self._conn = None
             self._module = None
-            # Clear exception references.
+            self._log = None
             for exc in _EXCEPTIONS:
                 setattr(self, exc, None)
 
@@ -126,7 +134,8 @@ class Context(object):
 def connect(module, *args, **kwargs):
     """
     Connect to a database using the given DB-API driver module. Returns
-    a database context representing that connection.
+    a database context representing that connection. Any arguments or
+    keyword arguments are passed the module's `connect` function.
     """
     conn = module.connect(*args, **kwargs)
     return Context(module, conn)
@@ -136,6 +145,18 @@ def context():
     Returns the current database context.
     """
     return Context.current()
+
+def set_logger(logger):
+    """
+    Set the function used for logging statements and their arguments.
+
+    The logging function should take two arguments: the query and a
+    sequence of query arguments.
+
+    There are two supplied logging functions: `null_logger` logs nothing,
+    while `stderr_logger` logs its arguments to stderr.
+    """
+    Context.current()._log = logger
 
 @contextlib.contextmanager
 def transaction():
@@ -230,6 +251,8 @@ def unindent_statement(query):
     """
     Strips leading whitespace from a query based on the indentation
     of the first non-empty line.
+
+    This is for use in logging functions for cleaning up query formatting.
     """
     lines = query.split("\n")
     prefix = 0
@@ -239,6 +262,26 @@ def unindent_statement(query):
             prefix = len(line) - len(stripped)
             break
     return "\n".join([line[prefix:] for line in lines])
+
+# }}}
+
+# Logging support {{{
+
+def null_logger(_query, _args):
+    """
+    A logger that discards everything sent to it.
+    """
+    pass
+
+def stderr_logger(query, args):
+    """
+    A logger that logs everything sent to it to standard error.
+    """
+    now = datetime.datetime.now()
+    print >> sys.stderr, "Query (%s):" % now.isoformat()
+    print >> sys.stderr, unindent_statement(query)
+    print >> sys.stderr, "Arguments:"
+    pprint.pprint(args, sys.stderr)
 
 # }}}
 
