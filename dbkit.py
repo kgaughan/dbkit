@@ -18,6 +18,7 @@ __all__ = [
     'NoContext',
     'connect', 'context', 'transaction', 'set_logger',
     'execute', 'query_row', 'query_value', 'query_column',
+    'dict_set', 'tuple_set',
     'unindent_statement',
     'null_logger', 'stderr_logger']
 
@@ -193,18 +194,15 @@ def query(stmt, args=()):
     """
     Execute a query. This returns an iterator of the result set.
     """
-    return _result_set(Context.execute(stmt, args))
+    return tuple_set(Context.execute(stmt, args))
 
 def query_row(stmt, args=()):
     """
     Execute a query. Returns the first row of the result set, or None.
     """
-    cursor = Context.execute(stmt, args)
-    try:
-        row = cursor.fetchone()
-    finally:
-        cursor.close()
-    return row
+    for row in query(stmt, args):
+        return row
+    return None
 
 def query_value(stmt, args=(), default=None):
     """
@@ -221,13 +219,27 @@ def query_column(stmt, args=()):
     """
     Execute a query, returning an iterable of the first column.
     """
-    return _column_set(Context.execute(stmt, args))
+    return column_set(Context.execute(stmt, args))
 
 # Result generators {{{
 
-def _result_set(cursor):
+def dict_set(cursor):
     """
-    Iterator over a statement's results.
+    Iterator over a statement's results as a dict.
+    """
+    columns = [col[0] for col in cursor.description]
+    try:
+        while True:
+            row = cursor.fetchone()
+            if row is None:
+                break
+            yield dict(zip(columns, row))
+    finally:
+        cursor.close()
+
+def tuple_set(cursor):
+    """
+    Iterator over a statement's results where each row is a tuple.
     """
     try:
         while True:
@@ -238,7 +250,7 @@ def _result_set(cursor):
     finally:
         cursor.close()
 
-def _column_set(cursor):
+def column_set(cursor):
     """
     Iterator over a statement's results.
     """
