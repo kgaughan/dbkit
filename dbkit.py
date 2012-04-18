@@ -49,7 +49,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['module', 'conn', 'depth', 'log'] + _EXCEPTIONS
+    __slots__ = ['module', 'conn', 'depth', 'log', 'factory'] + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, conn):
@@ -61,6 +61,7 @@ class Context(object):
         self.conn = conn
         self.depth = 0
         self.log = null_logger
+        self.factory = tuple_set
         # Copy driver module's exception references.
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
@@ -161,6 +162,16 @@ def set_logger(logger):
     """
     Context.current().log = logger
 
+def set_factory(factory):
+    """
+    Set the row factory used for generating rows from `query` and
+    `query_row`.
+
+    The factory function should take a cursor an return an iterable
+    over the current resultset.
+    """
+    Context.current().factory = factory
+
 @contextlib.contextmanager
 def transaction():
     """
@@ -190,17 +201,19 @@ def execute(stmt, args=()):
     """
     Context.execute(stmt, args).close()
 
-def query(stmt, args=()):
+def query(stmt, args=(), factory=None):
     """
     Execute a query. This returns an iterator of the result set.
     """
-    return tuple_set(Context.execute(stmt, args))
+    if factory is None:
+        factory = Context.current().factory
+    return factory(Context.execute(stmt, args))
 
-def query_row(stmt, args=()):
+def query_row(stmt, args=(), factory=None):
     """
     Execute a query. Returns the first row of the result set, or None.
     """
-    for row in query(stmt, args):
+    for row in query(stmt, args, factory):
         return row
     return None
 
