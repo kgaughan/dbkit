@@ -64,14 +64,14 @@ def test_transaction():
         dbkit.execute(SCHEMA)
 
         # First, make sure the normal case behaves correctly.
-        assert dbkit.context()._depth == 0
+        assert dbkit.context().depth == 0
         with dbkit.transaction():
-            assert dbkit.context()._depth == 1
+            assert dbkit.context().depth == 1
             dbkit.execute("""
                 INSERT INTO counters (counter, value)
                 VALUES ('foo', 42)
                 """)
-        assert dbkit.context()._depth == 0
+        assert dbkit.context().depth == 0
         value = dbkit.query_value("""
             SELECT value FROM counters WHERE counter = 'foo'
             """)
