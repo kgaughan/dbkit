@@ -18,6 +18,19 @@ WHERE  type = 'table'
 ORDER BY tbl_name
 """
 
+TEST_DATA = """
+INSERT INTO counters (counter, value)
+VALUES ('foo', 42)
+"""
+
+GET_COUNTER = """
+SELECT value FROM counters WHERE counter = ?
+"""
+
+UPDATE_COUNTER = """
+UPDATE counters SET value = ? WHERE counter = ?
+"""
+
 
 def test_good_connect():
     ctx = dbkit.connect(sqlite3, ':memory:')
@@ -66,46 +79,34 @@ def test_transaction():
         assert dbkit.context().depth == 0
         with dbkit.transaction():
             assert dbkit.context().depth == 1
-            dbkit.execute("""
-                INSERT INTO counters (counter, value)
-                VALUES ('foo', 42)
-                """)
+            dbkit.execute(TEST_DATA)
         assert dbkit.context().depth == 0
-        value = dbkit.query_value("""
-            SELECT value FROM counters WHERE counter = 'foo'
-            """)
+        value = dbkit.query_value(GET_COUNTER, ('foo',))
         assert value == 42
 
         # Now, ensure transactions are rolled back in case of exceptions.
         exception_caught = False
         try:
             with dbkit.transaction():
-                dbkit.execute("""
-                    UPDATE counters SET value = 13 WHERE counter = 'foo'
-                    """)
+                dbkit.execute(UPDATE_COUNTER, (13, 'foo'))
                 raise Exception()
             assert False, "Should've raised an exception."
         except:
             exception_caught = True
         assert exception_caught
-        value = dbkit.query_value("""
-            SELECT value FROM counters WHERE counter = 'foo'
-            """)
+        value = dbkit.query_value(GET_COUNTER, ('foo',))
         assert value == 42
 
 def test_factory():
     with dbkit.connect(sqlite3, ':memory:'):
         dbkit.execute(SCHEMA)
         with dbkit.transaction():
-            dbkit.execute("""
-                INSERT INTO counters (counter, value)
-                VALUES ('foo', 42)
-                """)
+            dbkit.execute(TEST_DATA)
 
         dbkit.set_factory(dbkit.dict_set)
         row = dbkit.query_row("""
-            SELECT counter, value FROM counters WHERE counter = 'foo'
-            """)
+            SELECT counter, value FROM counters WHERE counter = ?
+            """, ('foo',))
         assert isinstance(row, dict)
         assert len(row) == 2
         assert 'counter' in row
