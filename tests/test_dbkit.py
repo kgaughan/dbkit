@@ -1,4 +1,3 @@
-from contextlib import closing
 import sqlite3
 import types
 
@@ -27,7 +26,7 @@ def test_good_connect():
 
 def test_bad_connect():
     try:
-        ctx = dbkit.connect(sqlite3, '/nonexistent.db')
+        dbkit.connect(sqlite3, '/nonexistent.db')
         assert False, "Should not have been able to open database."
     except sqlite3.OperationalError:
         pass
@@ -60,7 +59,7 @@ def test_bad_drop_table():
             pass
 
 def test_transaction():
-    with dbkit.connect(sqlite3, ':memory:') as ctx:
+    with dbkit.connect(sqlite3, ':memory:'):
         dbkit.execute(SCHEMA)
 
         # First, make sure the normal case behaves correctly.
@@ -93,6 +92,26 @@ def test_transaction():
             SELECT value FROM counters WHERE counter = 'foo'
             """)
         assert value == 42
+
+def test_factory():
+    with dbkit.connect(sqlite3, ':memory:'):
+        dbkit.execute(SCHEMA)
+        with dbkit.transaction():
+            dbkit.execute("""
+                INSERT INTO counters (counter, value)
+                VALUES ('foo', 42)
+                """)
+
+        dbkit.set_factory(dbkit.dict_set)
+        row = dbkit.query_row("""
+            SELECT counter, value FROM counters WHERE counter = 'foo'
+            """)
+        assert isinstance(row, dict)
+        assert len(row) == 2
+        assert 'counter' in row
+        assert 'value' in row
+        assert row['counter'] == 'foo'
+        assert row['value'] == 42
 
 def test_unindent_statement():
     assert dbkit.unindent_statement("foo\nbar") == "foo\nbar"
