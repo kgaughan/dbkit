@@ -1,8 +1,3 @@
-Rows:
- - Currently only tuple-style rows are supported. It would be nice to
-   support dicts too, or, better yet, somethin akin to the sqlite3
-   module's Row() factory.
-
 Other missing functionality:
- - Support for callproc, executemany, nextset.
+ - Support for executemany, nextset.
  - Is there any sense in supporting Two-Phase Commit?
