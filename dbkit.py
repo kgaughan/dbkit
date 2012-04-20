@@ -120,6 +120,21 @@ class Context(object):
             raise
         return cursor
 
+    @classmethod
+    def execute_proc(cls, procname, args):
+        """
+        Execute a stored procedure, returning a cursor. For internal use only.
+        """
+        ctx = cls.current()
+        ctx.log(procname, args)
+        cursor = ctx.conn.cursor()
+        try:
+            cursor.callproc(procname, args)
+        except:
+            cursor.close()
+            raise
+        return cursor
+
     def close(self):
         """
         Close the connection this context wraps.
@@ -195,6 +210,8 @@ def transaction():
     if ctx.depth == 0:
         ctx.conn.commit()
 
+# SQL statement support {{{
+
 def execute(stmt, args=()):
     """
     Execute an SQL statement.
@@ -233,6 +250,52 @@ def query_column(stmt, args=()):
     Execute a query, returning an iterable of the first column.
     """
     return column_set(Context.execute(stmt, args))
+
+# }}}
+
+# Stored procedure support {{{
+
+def execute_proc(procname, args=()):
+    """
+    Execute a stored procedure.
+    """
+    Context.execute_proc(procname, args).close()
+
+def query_proc(procname, args=(), factory=None):
+    """
+    Execute a stored procedure. This returns an iterator of the result set.
+    """
+    if factory is None:
+        factory = Context.current().factory
+    return factory(Context.execute_proc(procname, args))
+
+def query_proc_row(procname, args=(), factory=None):
+    """
+    Execute a stored procedure. Returns the first row of the result set,
+    or None.
+    """
+    for row in query_proc(procname, args, factory):
+        return row
+    return None
+
+def query_proc_value(procname, args=(), default=None):
+    """
+    Execute a stored procedure, returning the first value in the first row
+    of the result set. If it returns no result set, a default value is
+    returned, which is `None` by default.
+    """
+    row = query_proc_row(procname, args)
+    if row is None:
+        return default
+    return row[0]
+
+def query_proc_column(procname, args=()):
+    """
+    Execute a stored procedure, returning an iterable of the first column.
+    """
+    return column_set(Context.execute_proc(procname, args))
+
+# }}}
 
 # Result generators {{{
 
@@ -311,7 +374,7 @@ def stderr_logger(stmt, args):
     A logger that logs everything sent to it to standard error.
     """
     now = datetime.datetime.now()
-    print >> sys.stderr, "Query (%s):" % now.isoformat()
+    print >> sys.stderr, "Executing (%s):" % now.isoformat()
     print >> sys.stderr, unindent_statement(stmt)
     print >> sys.stderr, "Arguments:"
     pprint.pprint(args, sys.stderr)
