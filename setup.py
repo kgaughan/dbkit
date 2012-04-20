@@ -3,7 +3,7 @@
 from __future__ import with_statement
 
 from os import path
-from setuptools import setup, find_packages
+from distutils.core import setup
 
 with open(path.join(path.dirname(__file__), 'README.rst')) as fh:
     readme = fh.read()
@@ -14,9 +14,7 @@ setup(
     description='DB-API made easier',
     long_description=readme,
     url='https://github.com/kgaughan/dbkit/',
-    packages=find_packages(exclude='tests'),
-    zip_safe=True,
-    install_requires=[],
+    py_modules=['dbkit'],
 
     classifiers=[
         'Development Status :: 3 - Alpha',
