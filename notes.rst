@@ -32,7 +32,7 @@ pool which is context affine. This means that in the default case, things
 behave as they currently do.
 
 For an idea of what the access methods of a pool would look like, here's a
-rough sketch of the null pool:
+rough sketch of the null pool::
 
     class NullPool(object):
         __slots__ = ['conn']
@@ -85,4 +85,4 @@ To do this right will likely require a daemon thread to occasionally poke
 the various pools, but for now a reap method will do.
 
 
-vim:set textwidth=74 et:
+.. vim:set textwidth=74 et:
