@@ -195,6 +195,59 @@ class SingleConnectionManager(ConnectionManagerBase):
         finally:
             self.conn = None
 
+
+class PooledConnectionManager(ConnectionManagerBase):
+    """
+    Manages connection acquisition and release from/to a pool.
+    """
+    __slots__ = ['pool', 'conn', 'depth']
+    def __init__(self, pool):
+        super(PooledConnectionManager, self).__init__()
+        self.pool = pool
+        # When this reaches 0, we release
+        self.depth = 0
+        # The connection currently being managed.
+        self.conn = None
+    def __enter__(self):
+        if self.depth == 0:
+            self.conn = self.pool.acquire()
+        self.depth += 1
+        return self.conn
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        self.depth -= 1
+        if self.depth == 0:
+            self.pool.release(self.conn)
+            self.conn = None
+    def close(self):
+        # Nothing currently, but may in the future signal to pool to
+        # release a connection.
+        pass
+
+# }}}
+
+# Pools {{{
+
+class PoolBase(object):
+    """
+    Abstract base class for all connection pools.
+    """
+    __slots__ = []
+    def acquire(self):
+        """
+        Acquire a connection from the pool.
+        """
+        raise NotImplementedError
+    def release(self, conn):
+        """
+        Release a previously acquired connection back to the pool.
+        """
+        raise NotImplementedError
+    def finalise(self):
+        """
+        Shut this pool down.
+        """
+        raise NotImplementedError
+
 # }}}
 
 def connect(module, *args, **kwargs):
