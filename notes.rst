@@ -84,5 +84,13 @@ idle in the deque for more than a certain period of time will be closed.
 To do this right will likely require a daemon thread to occasionally poke
 the various pools, but for now a reap method will do.
 
+*Update 2012-04-21:* Turns out that something is needed to mediate
+connection acquisition between the pool and context. This is needed so
+transactions can work (we announce we want a connection not just when
+issuing a statement but at the start of every transaction) and so that
+resources can be released properly if we're not using a connection pool.
+The ideas above still stand for the most part, so I don't feel the need to
+edit them.
+
 
 .. vim:set textwidth=74 et:
