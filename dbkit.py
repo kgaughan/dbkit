@@ -169,14 +169,14 @@ class ConnectionManagerBase(object):
     """
     __slots__ = []
     def __enter__(self):
-        raise NotImplementedError
+        raise NotImplementedError()
     def __exit__(self, _exc_type, _exc_value, _traceback):
-        raise NotImplementedError
+        raise NotImplementedError()
     def close(self):
         """
         Called to signal that any managed resourced can be released.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class SingleConnectionManager(ConnectionManagerBase):
@@ -247,19 +247,19 @@ class PoolBase(object):
         """
         Acquire a connection from the pool.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def release(self, conn):
         """
         Release a previously acquired connection back to the pool.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def finalise(self):
         """
         Shut this pool down.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def connect(self):
         """
