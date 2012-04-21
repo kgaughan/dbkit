@@ -8,8 +8,10 @@ database drivers.
 """
 
 from __future__ import with_statement
+import collections
 import contextlib
 import datetime
+import functools
 import pprint
 import sys
 import threading
@@ -17,6 +19,7 @@ import threading
 
 __all__ = [
     'NoContext',
+    'PoolBase', 'Pool',
     'connect', 'context', 'transaction', 'set_logger',
     'execute', 'query_row', 'query_value', 'query_column',
     'dict_set', 'tuple_set',
@@ -231,22 +234,96 @@ class PoolBase(object):
     """
     Abstract base class for all connection pools.
     """
-    __slots__ = []
+
+    __slots__ = ['module'] + _EXCEPTIONS
+
+    def __init__(self, module):
+        super(PoolBase, self).__init__()
+        self.module = module
+        for exc in _EXCEPTIONS:
+            setattr(self, exc, getattr(module, exc))
+
     def acquire(self):
         """
         Acquire a connection from the pool.
         """
         raise NotImplementedError
+
     def release(self, conn):
         """
         Release a previously acquired connection back to the pool.
         """
         raise NotImplementedError
+
     def finalise(self):
         """
         Shut this pool down.
         """
         raise NotImplementedError
+
+    def connect(self):
+        """
+        Returns a context that uses this pool as a connection source.
+        """
+        return Context(self.module, PooledConnectionManager(self))
+
+
+class Pool(PoolBase):
+    """
+    A very simple connection pool.
+    """
+
+    __slots__ = [
+        '_pool', '_cond',
+        '_max_conns', '_allocated',
+        '_make_connection']
+
+    def __init__(self, module, max_conns, *args, **kwargs):
+        super(Pool, self).__init__(module)
+        self._pool = collections.deque()
+        self._cond = threading.Condition()
+        self._max_conns = max_conns
+        self._allocated = 0
+        self._make_connection = functools.partial(
+                module.connect, *args, **kwargs)
+
+    def acquire(self):
+        self._cond.acquire()
+        try:
+            while True:
+                if len(self._pool) > 0:
+                    conn = self._pool.popleft()
+                    break
+                elif self._allocated < self._max_conns:
+                    conn = self._make_connection()
+                    self._allocated += 1
+                    break
+                else:
+                    self._cond.wait()
+        finally:
+            self._cond.release()
+        return conn
+
+    def release(self, conn):
+        self._cond.acquire()
+        self._pool.append(conn)
+        self._cond.notify()
+        self._cond.release()
+
+    def finalise(self):
+        self._cond.acquire()
+        # This is a terribly naive way to wait until all connections have
+        # been returned to the pool. That said, if it *doesn't* work, then
+        # there's something very odd going on with the client.
+        while len(self._pool) < self._allocated:
+            self._cond.wait()
+        for conn in self._pool:
+            try:
+                self._allocated -= 1
+                conn.close()
+            except:
+                pass
+        self._cond.release()
 
 # }}}
 
