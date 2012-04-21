@@ -7,6 +7,7 @@ much of the boilerplate involved in dealing with DB-API 2 compatible
 database drivers.
 """
 
+from __future__ import with_statement
 import contextlib
 import datetime
 import pprint
@@ -43,21 +44,22 @@ class NoContext(StandardError):
     """
     pass
 
+# Contexts {{{
 
 class Context(object):
     """
     A database connection context.
     """
 
-    __slots__ = ['conn', 'depth', 'log', 'factory'] + _EXCEPTIONS
+    __slots__ = ['mgr', 'depth', 'log', 'factory'] + _EXCEPTIONS
     state = threading.local()
 
-    def __init__(self, module, conn):
+    def __init__(self, module, mgr):
         """
         Initialise a context with a given driver module and connection.
         """
         super(Context, self).__init__()
-        self.conn = conn
+        self.mgr = mgr
         self.depth = 0
         self.log = null_logger
         self.factory = tuple_set
@@ -111,12 +113,13 @@ class Context(object):
         """
         ctx = cls.current()
         ctx.log(stmt, args)
-        cursor = ctx.conn.cursor()
-        try:
-            cursor.execute(stmt, args)
-        except:
-            cursor.close()
-            raise
+        with ctx.mgr as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(stmt, args)
+            except:
+                cursor.close()
+                raise
         return cursor
 
     @classmethod
@@ -126,12 +129,13 @@ class Context(object):
         """
         ctx = cls.current()
         ctx.log(procname, args)
-        cursor = ctx.conn.cursor()
-        try:
-            cursor.callproc(procname, args)
-        except:
-            cursor.close()
-            raise
+        with ctx.mgr as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.callproc(procname, args)
+            except:
+                cursor.close()
+                raise
         return cursor
 
     def close(self):
@@ -142,10 +146,56 @@ class Context(object):
         for exc in _EXCEPTIONS:
             setattr(self, exc, None)
         try:
+            self.mgr.close()
+        finally:
+            self.mgr = None
+
+# }}}
+
+# Connection management {{{
+
+class ConnectionManagerBase(object):
+    """
+    Manages connection acquisition and release from/to a pool.
+
+    Implementations should keep track of the times they've been entered and
+    exited, incrementing a counter for the former and decrementing it for
+    the latter. They should acquire a connection when entered with a
+    counter value of 0 and release it when exited with a counter value of
+    0.
+    """
+    __slots__ = []
+    def __enter__(self):
+        raise NotImplementedError
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        raise NotImplementedError
+    def close(self):
+        """
+        Called to signal that any managed resourced can be released.
+        """
+        raise NotImplementedError
+
+
+class SingleConnectionManager(ConnectionManagerBase):
+    """
+    Manages access to a single unpooled connection.
+    """
+    __slots__ = ['conn']
+    def __init__(self, conn):
+        super(SingleConnectionManager, self).__init__()
+        self.conn = conn
+    def __enter__(self):
+        return self.conn
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        # Nothing to do.
+        pass
+    def close(self):
+        try:
             self.conn.close()
         finally:
             self.conn = None
 
+# }}}
 
 def connect(module, *args, **kwargs):
     """
@@ -154,7 +204,7 @@ def connect(module, *args, **kwargs):
     keyword arguments are passed the module's `connect` function.
     """
     conn = module.connect(*args, **kwargs)
-    return Context(module, conn)
+    return Context(module, SingleConnectionManager(conn))
 
 def context():
     """
@@ -195,17 +245,18 @@ def transaction():
     # The idea here is to fake the nesting of transactions. Only when we've
     # gotten back to the topmost transaction context do we actually commit
     # or rollback.
-    try:
-        ctx.depth += 1
-        yield ctx
-        ctx.depth -= 1
-    except:
-        ctx.depth -= 1
+    with ctx.mgr as conn:
+        try:
+            ctx.depth += 1
+            yield ctx
+            ctx.depth -= 1
+        except:
+            ctx.depth -= 1
+            if ctx.depth == 0:
+                conn.rollback()
+            raise
         if ctx.depth == 0:
-            ctx.conn.rollback()
-        raise
-    if ctx.depth == 0:
-        ctx.conn.commit()
+            conn.commit()
 
 # SQL statement support {{{
 
