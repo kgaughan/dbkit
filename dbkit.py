@@ -138,14 +138,13 @@ class Context(object):
         """
         Close the connection this context wraps.
         """
+        self.log = None
+        for exc in _EXCEPTIONS:
+            setattr(self, exc, None)
         try:
             self.conn.close()
         finally:
-            # Clear references to let the garbage collector do its job.
             self.conn = None
-            self.log = None
-            for exc in _EXCEPTIONS:
-                setattr(self, exc, None)
 
 
 def connect(module, *args, **kwargs):
