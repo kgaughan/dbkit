@@ -245,19 +245,27 @@ class PoolBase(object):
 
     def acquire(self):
         """
-        Acquire a connection from the pool.
+        Acquire a connection from the pool and returns it.
+
+        This is intended for internal use only.
         """
         raise NotImplementedError()
 
     def release(self, conn):
         """
         Release a previously acquired connection back to the pool.
+
+        This is intended for internal use only.
         """
         raise NotImplementedError()
 
     def finalise(self):
         """
-        Shut this pool down.
+        Shut this pool down. Call this or have it called when you're
+        finished with the pool.
+
+        Please note that it is only guaranteed to complete after all
+        connections have been returned to the pool for finalisation.
         """
         raise NotImplementedError()
 
