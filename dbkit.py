@@ -49,7 +49,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['module', 'conn', 'depth', 'log', 'factory'] + _EXCEPTIONS
+    __slots__ = ['conn', 'depth', 'log', 'factory'] + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, conn):
@@ -57,7 +57,6 @@ class Context(object):
         Initialise a context with a given driver module and connection.
         """
         super(Context, self).__init__()
-        self.module = module
         self.conn = conn
         self.depth = 0
         self.log = null_logger
@@ -144,7 +143,6 @@ class Context(object):
         finally:
             # Clear references to let the garbage collector do its job.
             self.conn = None
-            self.module = None
             self.log = None
             for exc in _EXCEPTIONS:
                 setattr(self, exc, None)

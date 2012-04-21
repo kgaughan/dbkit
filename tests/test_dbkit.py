@@ -50,11 +50,9 @@ def test_context():
     with dbkit.connect(sqlite3, ':memory:') as ctx, closing(ctx):
         assert dbkit.Context.current(with_exception=False) is ctx
         assert ctx.conn is not None
-        assert ctx.module is not None
         assert ctx.log is not None
     assert dbkit.Context.current(with_exception=False) is None
     assert ctx.conn is None
-    assert ctx.module is None
     assert ctx.log is None
 
 def test_create_table():
