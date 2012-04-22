@@ -12,6 +12,7 @@ import collections
 import contextlib
 import datetime
 import functools
+import logging
 import pprint
 import sys
 import threading
@@ -39,6 +40,9 @@ _EXCEPTIONS = [
     'InternalError',
     'ProgrammingError',
     'NotSupportedError']
+
+# For the module's own internal logging.
+LOG = logging.getLogger(__name__)
 
 
 class NoContext(StandardError):
