@@ -4,13 +4,14 @@ from __future__ import with_statement
 
 from os import path
 from distutils.core import setup
+import dbkit
 
 with open(path.join(path.dirname(__file__), 'README.rst')) as fh:
     readme = fh.read()
 
 setup(
     name='dbkit',
-    version='0.1.0',
+    version=dbkit.__version__,
     description='DB-API made easier',
     long_description=readme,
     url='https://github.com/kgaughan/dbkit/',
