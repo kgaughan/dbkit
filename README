@@ -13,6 +13,8 @@ dbkit
 the pain involved in dealing with `DB-API 2`_ compatible database
 drivers.
 
+.. image:: https://secure.travis-ci.org/kgaughan/dbkit.png?branch=master
+
 
 Overview
 ========
