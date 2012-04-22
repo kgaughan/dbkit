@@ -1,5 +1,5 @@
 .. dbkit documentation master file, created by
-   sphinx-quickstart on Thu Apr 19 16:15:26 2012.
+   sphinx-quickstart on Mon Apr 23 00:07:36 2012.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -11,6 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   intro
+   tutorial
 
 
 Indices and tables
