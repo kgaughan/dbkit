@@ -26,6 +26,8 @@ __all__ = [
     'unindent_statement',
     'null_logger', 'stderr_logger']
 
+__version__ = '0.1.0'
+
 
 # DB-API 2 exceptions exposed by all drivers.
 _EXCEPTIONS = [
