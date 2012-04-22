@@ -47,6 +47,13 @@ class NoContext(StandardError):
     """
     pass
 
+
+class NotSupported(StandardError):
+    """
+    You are attempting something unsupported.
+    """
+    pass
+
 # Contexts {{{
 
 class Context(object):
@@ -287,6 +294,12 @@ class Pool(PoolBase):
         '_make_connection']
 
     def __init__(self, module, max_conns, *args, **kwargs):
+        try:
+            if module.threadsafety not in (2, 3):
+                raise NotSupported(
+                    "Connection pooling requires a threadsafe driver.")
+        except AttributeError:
+            raise NotSupported("Cannot determine driver threadsafety.")
         super(Pool, self).__init__(module)
         self._pool = collections.deque()
         self._cond = threading.Condition()
