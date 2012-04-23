@@ -4,4 +4,4 @@
 Tutorial
 ========
 
-A tutorial will eventually go here.
+.. todo:: Write a tutorial.

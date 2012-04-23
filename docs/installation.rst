@@ -4,4 +4,4 @@
 Installation
 ============
 
-To do.
+.. todo:: Explain how to install from source, PyPI, and git.
