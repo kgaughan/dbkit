@@ -27,9 +27,7 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
-
 
 .. Links
 .. _DB-API 2: http://www.python.org/dev/peps/pep-0249/
