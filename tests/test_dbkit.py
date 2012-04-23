@@ -1,3 +1,4 @@
+from __future__ import with_statement
 from contextlib import closing
 import sqlite3
 import types
@@ -47,10 +48,12 @@ def test_bad_connect():
 
 def test_context():
     assert dbkit.Context.current(with_exception=False) is None
-    with dbkit.connect(sqlite3, ':memory:') as ctx, closing(ctx):
+    ctx = dbkit.connect(sqlite3, ':memory:')
+    with ctx:
         assert dbkit.Context.current(with_exception=False) is ctx
         assert ctx.mgr is not None
         assert ctx.log is not None
+    ctx.close()
     assert dbkit.Context.current(with_exception=False) is None
     assert ctx.mgr is None
     assert ctx.log is None
