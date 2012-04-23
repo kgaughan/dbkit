@@ -141,7 +141,8 @@ class Context(object):
     @classmethod
     def execute_proc(cls, procname, args):
         """
-        Execute a stored procedure, returning a cursor. For internal use only.
+        Execute a stored procedure, returning a cursor. For internal use
+        only.
         """
         ctx = cls.current()
         ctx.log(procname, args)
@@ -433,7 +434,7 @@ def query(stmt, args=(), factory=None):
 
 def query_row(stmt, args=(), factory=None):
     """
-    Execute a query. Returns the first row of the result set, or None.
+    Execute a query. Returns the first row of the result set, or `None`
     """
     for row in query(stmt, args, factory):
         return row
@@ -477,7 +478,7 @@ def query_proc(procname, args=(), factory=None):
 def query_proc_row(procname, args=(), factory=None):
     """
     Execute a stored procedure. Returns the first row of the result set,
-    or None.
+    or `None`.
     """
     for row in query_proc(procname, args, factory):
         return row
@@ -533,7 +534,7 @@ def tuple_set(cursor):
 
 def column_set(cursor):
     """
-    Iterator over a statement's results.
+    Iterator over the first column of a statement's results.
     """
     try:
         while True:
