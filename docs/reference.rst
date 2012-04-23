@@ -126,6 +126,8 @@ Utilities
 Connection pools
 ================
 
+.. note:: Connection pool support is currently considered pre-alpha.
+
 Connection pooling is a way to share a common set of database connections
 over a set of contexts, each of which can be executing in different
 threads. Connection pooling can increase efficiency as it mitigates
