@@ -169,11 +169,11 @@ class Context(object):
 
 # }}}
 
-# Connection management {{{
+# Connection access mediation {{{
 
-class ConnectionManagerBase(object):
+class ConnectionMediatorBase(object):
     """
-    Manages connection acquisition and release from/to a pool.
+    Mediates connection acquisition and release from/to a pool.
 
     Implementations should keep track of the times they've been entered and
     exited, incrementing a counter for the former and decrementing it for
@@ -193,13 +193,13 @@ class ConnectionManagerBase(object):
         raise NotImplementedError()
 
 
-class SingleConnectionManager(ConnectionManagerBase):
+class SingleConnectionMediator(ConnectionMediatorBase):
     """
-    Manages access to a single unpooled connection.
+    Mediates access to a single unpooled connection.
     """
     __slots__ = ['conn']
     def __init__(self, conn):
-        super(SingleConnectionManager, self).__init__()
+        super(SingleConnectionMediator, self).__init__()
         self.conn = conn
     def __enter__(self):
         return self.conn
@@ -213,17 +213,17 @@ class SingleConnectionManager(ConnectionManagerBase):
             self.conn = None
 
 
-class PooledConnectionManager(ConnectionManagerBase):
+class PooledConnectionMediator(ConnectionMediatorBase):
     """
-    Manages connection acquisition and release from/to a pool.
+    Mediates connection acquisition and release from/to a pool.
     """
     __slots__ = ['pool', 'conn', 'depth']
     def __init__(self, pool):
-        super(PooledConnectionManager, self).__init__()
+        super(PooledConnectionMediator, self).__init__()
         self.pool = pool
         # When this reaches 0, we release
         self.depth = 0
-        # The connection currently being managed.
+        # The currently acquired connection, or None.
         self.conn = None
     def __enter__(self):
         if self.depth == 0:
@@ -287,7 +287,7 @@ class PoolBase(object):
         """
         Returns a context that uses this pool as a connection source.
         """
-        return Context(self.module, PooledConnectionManager(self))
+        return Context(self.module, PooledConnectionMediator(self))
 
 
 class Pool(PoolBase):
@@ -362,7 +362,7 @@ def connect(module, *args, **kwargs):
     keyword arguments are passed the module's `connect` function.
     """
     conn = module.connect(*args, **kwargs)
-    return Context(module, SingleConnectionManager(conn))
+    return Context(module, SingleConnectionMediator(conn))
 
 def context():
     """
@@ -397,6 +397,16 @@ def transaction():
     """
     Sets up a context where all the statements within it are ran within a
     single database transaction.
+
+    Here's a rough example of how you'd use it::
+
+        import sqlite3
+        import dbkit
+
+        with dbkit.connect(sqlite3, ':memory:'):
+            with dbkit.transaction():
+                # Execute some statements in the transaction.
+                pass
     """
     ctx = Context.current()
 

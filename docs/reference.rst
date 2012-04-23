@@ -150,21 +150,31 @@ The `acquire` and `release` methods are for internal use only.
    :undoc-members: Warning, Error, InterfaceError, DatabaseError, DataError, OperationalError, IntegrityError, InternalError, ProgrammingError, NotSupportedError
 
 
-Connection managers
-===================
+Connection mediators
+====================
 
-Connection managers are used internally within contexts to manage
-connection acquisition and release. They're an advanced feature that you
-as a developer will only need to understand and use if writing your own
-connection pool. All connection manager instances are context managers.
+Connection mediators are used internally within contexts to mediate
+connection acquisition and release between a context and a (notional)
+connection pool. They're an advanced feature that you as a developer will
+only need to understand and use if writing your own connection pool. All
+connection mediator instances are context managers.
 
-.. autoclass:: dbkit.ConnectionManagerBase
+.. note:: You might find the naming a bit odd. After all, wouldn't calling
+   something like this a 'manager' be just as appropriate and less...
+   odd? Not really. Calling something a 'manager' presupposes a degree of
+   control over the resource in question. A 'mediator', on the other hand,
+   simply acts as a middle man which both parties know. Introducing the
+   mediator means that contexts don't need to know where their connections
+   come from and pools don't need to care how they're used. The mediator
+   takes care of all that.
+
+.. autoclass:: dbkit.ConnectionMediatorBase
    :members:
 
-.. autoclass:: dbkit.SingleConnectionManager
+.. autoclass:: dbkit.SingleConnectionMediator
    :undoc-members: close
 
-.. autoclass:: dbkit.PooledConnectionManager
+.. autoclass:: dbkit.PooledConnectionMediator
    :undoc-members: close
 
 .. Links
