@@ -14,10 +14,6 @@ involved in dealing with `DB-API 2`_ compatible database drivers.
    Like dbkit itself, this documentation is a work in progress. Unlike
    dbkit, it is nowhere near complete yet. Bear with me.
 
-
-Documentation
-=============
-
 .. toctree::
    :maxdepth: 2
 
