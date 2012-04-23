@@ -188,7 +188,7 @@ class ConnectionMediatorBase(object):
         raise NotImplementedError()
     def close(self):
         """
-        Called to signal that any managed resourced can be released.
+        Called to signal that any resources can be released.
         """
         raise NotImplementedError()
 
