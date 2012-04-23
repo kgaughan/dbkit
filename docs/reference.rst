@@ -165,4 +165,5 @@ connection pool. All connection manager instances are context managers.
 .. autoclass:: dbkit.PooledConnectionManager
    :undoc-members: close
 
+.. Links
 .. _PEP-0249: http://www.python.org/dev/peps/pep-0249/

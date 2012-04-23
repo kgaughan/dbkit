@@ -3,16 +3,26 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to dbkit's documentation!
-=================================
+=======================================================
+dbkit: taking the pain out of database access in Python
+=======================================================
 
-Some short introduction will eventually go here.
+**dbkit** is a library that abstracts away at least part of the pain
+involved in dealing with `DB-API 2`_ compatible database drivers.
 
-Contents:
+.. note::
+   Like dbkit itself, this documentation is a work in progress. Unlike
+   dbkit, it is nowhere near complete yet. Bear with me.
+
+
+Documentation
+=============
 
 .. toctree::
    :maxdepth: 2
 
+   intro
+   installation
    tutorial
    reference
 
@@ -24,3 +34,6 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+
+.. Links
+.. _DB-API 2: http://www.python.org/dev/peps/pep-0249/
