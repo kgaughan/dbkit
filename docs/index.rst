@@ -6,13 +6,15 @@
 Welcome to dbkit's documentation!
 =================================
 
+Some short introduction will eventually go here.
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
-   intro
    tutorial
+   reference
 
 
 Indices and tables
