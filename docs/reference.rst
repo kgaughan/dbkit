@@ -32,6 +32,8 @@ Exceptions
 
 .. autoclass:: dbkit.NotSupported
 
+.. autoclass:: dbkit.AbortTransaction
+
 
 Configuration
 =============
@@ -45,6 +47,8 @@ Transactions
 ============
 
 .. autofunction:: dbkit.transaction
+
+.. autofunction:: dbkit.transactional
 
 
 Statement execution

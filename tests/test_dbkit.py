@@ -95,9 +95,29 @@ def test_transaction():
         try:
             with dbkit.transaction():
                 dbkit.execute(UPDATE_COUNTER, (13, 'foo'))
-                raise Exception()
+                raise dbkit.AbortTransaction()
             assert False, "Should've raised an exception."
-        except:
+        except dbkit.AbortTransaction:
+            exception_caught = True
+        assert exception_caught
+        value = dbkit.query_value(GET_COUNTER, ('foo',))
+        assert value == 42
+
+def test_transaction_decorator():
+    @dbkit.transactional
+    def update_counter_and_fail(name, value):
+        dbkit.execute(UPDATE_COUNTER, (value, name))
+        raise dbkit.AbortTransaction()
+
+    with dbkit.connect(sqlite3, ':memory:'):
+        dbkit.execute(SCHEMA)
+        with dbkit.transaction():
+            dbkit.execute(TEST_DATA)
+
+        exception_caught = False
+        try:
+            update_counter_and_fail('foo', 13)
+        except dbkit.AbortTransaction:
             exception_caught = True
         assert exception_caught
         value = dbkit.query_value(GET_COUNTER, ('foo',))

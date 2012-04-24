@@ -21,8 +21,11 @@ import threading
 __all__ = [
     'NoContext', 'NotSupported', 'AbortTransaction',
     'PoolBase', 'Pool',
-    'connect', 'context', 'transaction', 'set_logger',
+    'connect', 'context',
+    'transaction', 'transactional',
+    'set_logger', 'set_factory',
     'execute', 'query_row', 'query_value', 'query_column',
+    'execute_proc', 'query_proc_row', 'query_proc_value', 'query_proc_column',
     'dict_set', 'tuple_set',
     'unindent_statement',
     'null_logger', 'stderr_logger']
@@ -451,6 +454,46 @@ def transaction():
             raise
         if ctx.depth == 0:
             conn.commit()
+
+def transactional(wrapped):
+    """
+    A decorator to denote that the content of the decorated function or
+    method is to be ran in a transaction.
+
+    The following code is equivalent to the example for `transaction`::
+
+        import sqlite3
+        import sys
+        from dbkit import connect, transactional, query_value, execute, context
+
+        # ...do some stuff...
+
+        with connect(sqlite3, '/path/to/my.db') as ctx:
+            try: 
+                change_ownership(page_id, new_owner_id)
+            catch ctx.IntegrityError:
+                print >> sys.stderr, "Naughty!"
+
+        @transactional
+        def change_ownership(page_id, new_owner_id):
+            old_owner_id = query_value(
+                "SELECT owner_id FROM pages WHERE page_id = ?",
+                (page_id,))
+            execute(
+                "UPDATE users SET owned = owned - 1 WHERE id = ?",
+                (old_owner_id,))
+            execute(
+                "UPDATE users SET owned = owned + 1 WHERE id = ?",
+                (new_owner_id,))
+            execute(
+                "UPDATE pages SET owner_id = ? WHERE page_id = ?",
+                (new_owner_id, page_id))
+    """
+    def wrapper(*args, **kwargs):
+        """Dummy."""
+        with transaction():
+            return wrapped(*args, **kwargs)
+    return functools.update_wrapper(wrapper, wrapped)
 
 # SQL statement support {{{
 
