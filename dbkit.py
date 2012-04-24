@@ -401,33 +401,31 @@ def transaction():
     Here's a rough example of how you'd use it::
 
         import sqlite3
-        import dbkit
         import sys
+        from dbkit import connect, transaction, query_value, execute, context
 
         # ...do some stuff...
 
-        with dbkit.connect(sqlite3, '/path/to/my.db') as ctx:
-            if not change_ownership(page_id, new_owner_id):
+        with connect(sqlite3, '/path/to/my.db') as ctx:
+            try: 
+                change_ownership(page_id, new_owner_id)
+            catch ctx.IntegrityError:
                 print >> sys.stderr, "Naughty!"
 
         def change_ownership(page_id, new_owner_id):
-            try:
-                with dbkit.transaction():
-                    old_owner_id = dbkit.query_value(
-                        "SELECT owner_id FROM pages WHERE page_id = ?",
-                        (page_id,))
-                    dbkit.execute(
-                        "UPDATE users SET owned = owned - 1 WHERE id = ?",
-                        (old_owner_id,))
-                    dbkit.execute(
-                        "UPDATE users SET owned = owned + 1 WHERE id = ?",
-                        (new_owner_id,))
-                    dbkit.execute(
-                        "UPDATE pages SET owner_id = ? WHERE page_id = ?",
-                        (new_owner_id, page_id))
-            catch ctx.IntegrityError:
-                return False
-            return True
+            with transaction():
+                old_owner_id = query_value(
+                    "SELECT owner_id FROM pages WHERE page_id = ?",
+                    (page_id,))
+                execute(
+                    "UPDATE users SET owned = owned - 1 WHERE id = ?",
+                    (old_owner_id,))
+                execute(
+                    "UPDATE users SET owned = owned + 1 WHERE id = ?",
+                    (new_owner_id,))
+                execute(
+                    "UPDATE pages SET owner_id = ? WHERE page_id = ?",
+                    (new_owner_id, page_id))
     """
     ctx = Context.current()
 
