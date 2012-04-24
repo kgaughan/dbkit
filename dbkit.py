@@ -19,7 +19,7 @@ import threading
 
 
 __all__ = [
-    'NoContext',
+    'NoContext', 'NotSupported', 'AbortTransaction',
     'PoolBase', 'Pool',
     'connect', 'context', 'transaction', 'set_logger',
     'execute', 'query_row', 'query_value', 'query_column',
@@ -57,6 +57,13 @@ class NoContext(StandardError):
 class NotSupported(StandardError):
     """
     You are attempting something unsupported.
+    """
+    pass
+
+
+class AbortTransaction(Exception):
+    """
+    Raised to signal that code within the transaction wants to abort it.
     """
     pass
 
