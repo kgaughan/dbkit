@@ -22,7 +22,7 @@ exposed by the connection's database driver. For a list of these
 exceptions, see `PEP-0249`_.
 
 .. autoclass:: dbkit.Context
-   :members: close
+   :members: close, set_factory, set_logger
 
 
 Exceptions
@@ -33,14 +33,6 @@ Exceptions
 .. autoclass:: dbkit.NotSupported
 
 .. autoclass:: dbkit.AbortTransaction
-
-
-Configuration
-=============
-
-.. autofunction:: dbkit.set_logger
-
-.. autofunction:: dbkit.set_factory
 
 
 Transactions

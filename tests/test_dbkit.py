@@ -52,11 +52,11 @@ def test_context():
     with ctx:
         assert dbkit.Context.current(with_exception=False) is ctx
         assert ctx.mgr is not None
-        assert ctx.log is not None
+        assert ctx._log is not None
     ctx.close()
     assert dbkit.Context.current(with_exception=False) is None
     assert ctx.mgr is None
-    assert ctx.log is None
+    assert ctx._log is None
 
 def test_create_table():
     with dbkit.connect(sqlite3, ':memory:'):
@@ -124,12 +124,12 @@ def test_transaction_decorator():
         assert value == 42
 
 def test_factory():
-    with dbkit.connect(sqlite3, ':memory:'):
+    with dbkit.connect(sqlite3, ':memory:') as ctx:
         dbkit.execute(SCHEMA)
         with dbkit.transaction():
             dbkit.execute(TEST_DATA)
 
-        dbkit.set_factory(dbkit.dict_set)
+        ctx.set_factory(dbkit.dict_set)
         row = dbkit.query_row("""
             SELECT counter, value FROM counters WHERE counter = ?
             """, ('foo',))

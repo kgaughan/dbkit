@@ -23,7 +23,6 @@ __all__ = [
     'PoolBase', 'Pool',
     'connect', 'context',
     'transaction', 'transactional',
-    'set_logger', 'set_factory',
     'execute', 'query_row', 'query_value', 'query_column',
     'execute_proc', 'query_proc_row', 'query_proc_value', 'query_proc_column',
     'dict_set', 'tuple_set',
@@ -77,7 +76,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['mgr', 'depth', 'log', 'factory'] + _EXCEPTIONS
+    __slots__ = ['mgr', 'depth', '_log', '_factory'] + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, mgr):
@@ -87,8 +86,8 @@ class Context(object):
         super(Context, self).__init__()
         self.mgr = mgr
         self.depth = 0
-        self.log = null_logger
-        self.factory = tuple_set
+        self._log = null_logger
+        self._factory = tuple_set
         # Copy driver module's exception references.
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
@@ -132,14 +131,34 @@ class Context(object):
 
     # }}}
 
-    @classmethod
-    def execute(cls, stmt, args):
+    def set_logger(self, logger):
         """
-        Execute a query, returning a cursor. For internal use only.
+        Sets the function used for logging statements and their arguments.
+
+        The logging function should take two arguments: the query and a
+        sequence of query arguments.
+
+        There are two supplied logging functions: `null_logger` logs
+        nothing, while `stderr_logger` logs its arguments to stderr.
         """
-        ctx = cls.current()
-        ctx.log(stmt, args)
-        with ctx.mgr as conn:
+        self._log = logger
+
+    def set_factory(self, factory):
+        """
+        Sets the row factory used for generating rows from `query` and
+        `query_row`.
+
+        The factory function should take a cursor an return an iterable
+        over the current resultset.
+        """
+        self._factory = factory
+
+    def execute(self, stmt, args):
+        """
+        Execute a statement, returning a cursor. For internal use only.
+        """
+        self._log(stmt, args)
+        with self.mgr as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute(stmt, args)
@@ -148,15 +167,20 @@ class Context(object):
                 raise
         return cursor
 
-    @classmethod
-    def execute_proc(cls, procname, args):
+    def query(self, stmt, args, factory):
+        """
+        Executes a statement, returning a factory. For internal use only.
+        """
+        factory = self._factory if factory is None else factory
+        return factory(self.execute(stmt, args))
+
+    def execute_proc(self, procname, args):
         """
         Execute a stored procedure, returning a cursor. For internal use
         only.
         """
-        ctx = cls.current()
-        ctx.log(procname, args)
-        with ctx.mgr as conn:
+        self._log(procname, args)
+        with self.mgr as conn:
             cursor = conn.cursor()
             try:
                 cursor.callproc(procname, args)
@@ -165,11 +189,19 @@ class Context(object):
                 raise
         return cursor
 
+    def query_proc(self, procname, args, factory):
+        """
+        Execute a stored procedure, returning a factory. For internal use
+        only.
+        """
+        factory = self._factory if factory is None else factory
+        return factory(self.execute_proc(procname, args))
+
     def close(self):
         """
         Close the connection this context wraps.
         """
-        self.log = None
+        self._log = None
         for exc in _EXCEPTIONS:
             setattr(self, exc, None)
         try:
@@ -380,28 +412,6 @@ def context():
     """
     return Context.current()
 
-def set_logger(logger):
-    """
-    Set the function used for logging statements and their arguments.
-
-    The logging function should take two arguments: the query and a
-    sequence of query arguments.
-
-    There are two supplied logging functions: `null_logger` logs nothing,
-    while `stderr_logger` logs its arguments to stderr.
-    """
-    Context.current().log = logger
-
-def set_factory(factory):
-    """
-    Set the row factory used for generating rows from `query` and
-    `query_row`.
-
-    The factory function should take a cursor an return an iterable
-    over the current resultset.
-    """
-    Context.current().factory = factory
-
 @contextlib.contextmanager
 def transaction():
     """
@@ -417,7 +427,7 @@ def transaction():
         # ...do some stuff...
 
         with connect(sqlite3, '/path/to/my.db') as ctx:
-            try: 
+            try:
                 change_ownership(page_id, new_owner_id)
             catch ctx.IntegrityError:
                 print >> sys.stderr, "Naughty!"
@@ -469,7 +479,7 @@ def transactional(wrapped):
         # ...do some stuff...
 
         with connect(sqlite3, '/path/to/my.db') as ctx:
-            try: 
+            try:
                 change_ownership(page_id, new_owner_id)
             catch ctx.IntegrityError:
                 print >> sys.stderr, "Naughty!"
@@ -490,7 +500,6 @@ def transactional(wrapped):
                 (new_owner_id, page_id))
     """
     def wrapper(*args, **kwargs):
-        """Dummy."""
         with transaction():
             return wrapped(*args, **kwargs)
     return functools.update_wrapper(wrapper, wrapped)
@@ -501,21 +510,19 @@ def execute(stmt, args=()):
     """
     Execute an SQL statement.
     """
-    Context.execute(stmt, args).close()
+    Context.current().execute(stmt, args).close()
 
 def query(stmt, args=(), factory=None):
     """
     Execute a query. This returns an iterator of the result set.
     """
-    if factory is None:
-        factory = Context.current().factory
-    return factory(Context.execute(stmt, args))
+    return Context.current().query(stmt, args, factory)
 
 def query_row(stmt, args=(), factory=None):
     """
     Execute a query. Returns the first row of the result set, or `None`
     """
-    for row in query(stmt, args, factory):
+    for row in Context.current().query(stmt, args, factory):
         return row
     return None
 
@@ -525,16 +532,15 @@ def query_value(stmt, args=(), default=None):
     result set. If the query returns no result set, a default value is
     returned, which is `None` by default.
     """
-    row = query_row(stmt, args)
-    if row is None:
-        return default
-    return row[0]
+    for row in Context.current().query(stmt, args, tuple_set):
+        return row[0]
+    return default
 
 def query_column(stmt, args=()):
     """
     Execute a query, returning an iterable of the first column.
     """
-    return column_set(Context.execute(stmt, args))
+    return Context.current().query(stmt, args, column_set)
 
 # }}}
 
@@ -544,22 +550,20 @@ def execute_proc(procname, args=()):
     """
     Execute a stored procedure.
     """
-    Context.execute_proc(procname, args).close()
+    Context.current().execute_proc(procname, args).close()
 
 def query_proc(procname, args=(), factory=None):
     """
     Execute a stored procedure. This returns an iterator of the result set.
     """
-    if factory is None:
-        factory = Context.current().factory
-    return factory(Context.execute_proc(procname, args))
+    return Context.current().query_proc(procname, args, factory)
 
 def query_proc_row(procname, args=(), factory=None):
     """
     Execute a stored procedure. Returns the first row of the result set,
     or `None`.
     """
-    for row in query_proc(procname, args, factory):
+    for row in Context.current().query(procname, args, factory):
         return row
     return None
 
@@ -569,16 +573,15 @@ def query_proc_value(procname, args=(), default=None):
     of the result set. If it returns no result set, a default value is
     returned, which is `None` by default.
     """
-    row = query_proc_row(procname, args)
-    if row is None:
-        return default
-    return row[0]
+    for row in Context.current().query_proc(procname, args, tuple_set):
+        return row[0]
+    return default
 
 def query_proc_column(procname, args=()):
     """
     Execute a stored procedure, returning an iterable of the first column.
     """
-    return column_set(Context.execute_proc(procname, args))
+    return Context.current().query_proc(procname, args, column_set)
 
 # }}}
 
