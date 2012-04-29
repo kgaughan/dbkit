@@ -33,6 +33,13 @@ UPDATE_COUNTER = """
 UPDATE counters SET value = ? WHERE counter = ?
 """
 
+def setup():
+    """Creates a context fit for testing."""
+    with dbkit.connect(sqlite3, ':memory:') as ctx:
+        dbkit.execute(SCHEMA)
+        with dbkit.transaction():
+            dbkit.execute(TEST_DATA)
+    return ctx
 
 def test_good_connect():
     ctx = dbkit.connect(sqlite3, ':memory:')
@@ -72,8 +79,7 @@ def test_create_table():
         assert list(result) == [u'counters']
 
 def test_bad_drop_table():
-    with dbkit.connect(sqlite3, ':memory:') as ctx:
-        dbkit.execute(SCHEMA)
+    with setup() as ctx:
         try:
             dbkit.execute("DROP TABLE kownturs")
             assert False, "Should have triggered an exception."
@@ -112,11 +118,7 @@ def test_transaction_decorator():
         dbkit.execute(UPDATE_COUNTER, (value, name))
         raise dbkit.AbortTransaction()
 
-    with dbkit.connect(sqlite3, ':memory:'):
-        dbkit.execute(SCHEMA)
-        with dbkit.transaction():
-            dbkit.execute(TEST_DATA)
-
+    with setup():
         exception_caught = False
         try:
             update_counter_and_fail('foo', 13)
@@ -127,11 +129,7 @@ def test_transaction_decorator():
         assert value == 42
 
 def test_factory():
-    with dbkit.connect(sqlite3, ':memory:') as ctx:
-        dbkit.execute(SCHEMA)
-        with dbkit.transaction():
-            dbkit.execute(TEST_DATA)
-
+    with setup() as ctx:
         ctx.set_factory(dbkit.dict_set)
         row = dbkit.query_row("""
             SELECT counter, value FROM counters WHERE counter = ?
