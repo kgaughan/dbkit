@@ -59,14 +59,26 @@ def test_bad_connect():
 def test_context():
     assert dbkit.Context.current(with_exception=False) is None
     ctx = dbkit.connect(sqlite3, ':memory:')
+
     with ctx:
+        # Check nesting.
+        assert len(ctx.state.stack) == 1
+        with ctx:
+            assert len(ctx.state.stack) == 2
+        assert len(ctx.state.stack) == 1
+
         assert dbkit.Context.current(with_exception=False) is ctx
         assert ctx.mdr is not None
         assert ctx._log is not None
     ctx.close()
-    assert dbkit.Context.current(with_exception=False) is None
+    try:
+        dbkit.context()
+        assert False, "Should not have been able to access context."
+    except:
+        pass
     assert ctx.mdr is None
     assert ctx._log is None
+    assert len(ctx.state.stack) == 0
 
 def test_create_table():
     with dbkit.connect(sqlite3, ':memory:'):
@@ -96,8 +108,8 @@ def test_transaction():
             assert dbkit.context().depth == 1
             dbkit.execute(TEST_DATA)
         assert dbkit.context().depth == 0
-        value = dbkit.query_value(GET_COUNTER, ('foo',))
-        assert value == 42
+        assert dbkit.query_value(GET_COUNTER, ('foo',)) == 42
+        assert dbkit.query_value(GET_COUNTER, ('bar',)) is None
 
         # Now, ensure transactions are rolled back in case of exceptions.
         exception_caught = False
@@ -140,6 +152,10 @@ def test_factory():
         assert 'value' in row
         assert row['counter'] == 'foo'
         assert row['value'] == 42
+        row = dbkit.query_row("""
+            SELECT counter, value FROM counters WHERE counter = ?
+            """, ('bar',))
+        assert row is None
 
 def test_unpooled_disconnect():
     ctx = setup()
@@ -169,6 +185,8 @@ def test_unpooled_disconnect():
     with ctx:
         assert len(list(dbkit.query_column(LIST_TABLES))) == 0
         assert ctx.mdr.conn is not None
+
+    ctx.close()
 
 def test_unindent_statement():
     assert dbkit.unindent_statement("foo\nbar") == "foo\nbar"
