@@ -68,7 +68,7 @@ database context, if the DBMS supports stored procedures.
 
 .. autofunction:: dbkit.execute_proc
 
-.. autofunction:: dbkit.query
+.. autofunction:: dbkit.query_proc
 
 .. autofunction:: dbkit.query_proc_row
 
