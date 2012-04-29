@@ -41,7 +41,10 @@ def test_good_connect():
 
 def test_bad_connect():
     try:
-        dbkit.connect(sqlite3, '/nonexistent.db')
+        with dbkit.connect(sqlite3, '/nonexistent.db') as ctx:
+            # Wouldn't do this in real code as the mediator is private.
+            with ctx.mdr:
+                pass
         assert False, "Should not have been able to open database."
     except sqlite3.OperationalError:
         pass

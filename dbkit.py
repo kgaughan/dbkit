@@ -223,11 +223,23 @@ class ConnectionMediatorBase(object):
     counter value of 0 and release it when exited with a counter value of
     0.
     """
-    __slots__ = []
+
+    __slots__ = ['OperationalError', 'conn', 'depth']
+
+    def __init__(self, exceptions):
+        super(ConnectionMediatorBase, self).__init__()
+        self.OperationalError = exceptions.OperationalError
+        # The currently acquired connection, or None.
+        self.conn = None
+        # When this reaches 0, we release
+        self.depth = 0
+
     def __enter__(self):
         raise NotImplementedError()
+
     def __exit__(self, _exc_type, _exc_value, _traceback):
         raise NotImplementedError()
+
     def close(self):
         """
         Called to signal that any resources can be released.
@@ -239,44 +251,65 @@ class SingleConnectionMediator(ConnectionMediatorBase):
     """
     Mediates access to a single unpooled connection.
     """
-    __slots__ = ['conn']
-    def __init__(self, conn):
-        super(SingleConnectionMediator, self).__init__()
-        self.conn = conn
+
+    __slots__ = ['connect']
+
+    def __init__(self, module, connect_):
+        super(SingleConnectionMediator, self).__init__(module)
+        self.connect = connect_
+
     def __enter__(self):
+        if self.conn is None:
+            # TODO: if depth > 0, something's gone wrong.
+            if self.depth == 0:
+                self.conn = self.connect()
+        self.depth += 1
         return self.conn
-    def __exit__(self, _exc_type, _exc_value, _traceback):
-        # Nothing to do.
-        pass
-    def close(self):
-        try:
-            self.conn.close()
-        finally:
+
+    def __exit__(self, exc_type, _exc_value, _traceback):
+        self.depth -= 1
+        if exc_type is self.OperationalError:
+            try:
+                self.conn.close()
+            except:
+                pass
             self.conn = None
+
+    def close(self):
+        if self.conn is not None:
+            try:
+                self.conn.close()
+            finally:
+                self.conn = None
 
 
 class PooledConnectionMediator(ConnectionMediatorBase):
     """
     Mediates connection acquisition and release from/to a pool.
     """
-    __slots__ = ['pool', 'conn', 'depth']
+
+    __slots__ = ['pool']
+
     def __init__(self, pool):
-        super(PooledConnectionMediator, self).__init__()
+        super(PooledConnectionMediator, self).__init__(pool)
         self.pool = pool
-        # When this reaches 0, we release
-        self.depth = 0
-        # The currently acquired connection, or None.
-        self.conn = None
+
     def __enter__(self):
         if self.depth == 0:
             self.conn = self.pool.acquire()
         self.depth += 1
         return self.conn
-    def __exit__(self, _exc_type, _exc_value, _traceback):
+
+    def __exit__(self, exc_type, _exc_value, _traceback):
         self.depth -= 1
-        if self.depth == 0:
-            self.pool.release(self.conn)
-            self.conn = None
+        if self.conn is not None:
+            if exc_type is self.OperationalError:
+                self.pool.discard()
+                self.conn = None
+            elif self.depth == 0:
+                self.pool.release(self.conn)
+                self.conn = None
+
     def close(self):
         # Nothing currently, but may in the future signal to pool to
         # release a connection.
@@ -310,6 +343,14 @@ class PoolBase(object):
     def release(self, conn):
         """
         Release a previously acquired connection back to the pool.
+
+        This is intended for internal use only.
+        """
+        raise NotImplementedError()
+
+    def discard(self):
+        """
+        Signal to the pool that a connect has been discarded.
 
         This is intended for internal use only.
         """
@@ -379,6 +420,11 @@ class Pool(PoolBase):
         self._cond.notify()
         self._cond.release()
 
+    def discard(self):
+        self._cond.acquire()
+        self._allocated -= 1
+        self._cond.release()
+
     def finalise(self):
         self._cond.acquire()
         # This is a terribly naive way to wait until all connections have
@@ -409,8 +455,10 @@ def connect(module, *args, **kwargs):
     a database context representing that connection. Any arguments or
     keyword arguments are passed the module's `connect` function.
     """
-    conn = module.connect(*args, **kwargs)
-    return Context(module, SingleConnectionMediator(conn))
+    mdr = SingleConnectionMediator(
+            module,
+            _make_connect(module, args, kwargs))
+    return Context(module, mdr)
 
 def context():
     """
@@ -463,6 +511,11 @@ def transaction():
             ctx.depth += 1
             yield ctx
             ctx.depth -= 1
+        except ctx.mdr.OperationalError:
+            # We've lost the connection, so there's no sense in attempting
+            # to roll back back the transaction.
+            ctx.depth -= 1
+            raise
         except:
             ctx.depth -= 1
             if ctx.depth == 0:
