@@ -260,9 +260,8 @@ class SingleConnectionMediator(ConnectionMediatorBase):
 
     def __enter__(self):
         if self.conn is None:
-            # TODO: if depth > 0, something's gone wrong.
-            if self.depth == 0:
-                self.conn = self.connect()
+            assert self.depth == 0, "Can only connect outside a transaction."
+            self.conn = self.connect()
         self.depth += 1
         return self.conn
 
