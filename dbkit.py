@@ -340,7 +340,7 @@ class Pool(PoolBase):
     __slots__ = [
         '_pool', '_cond',
         '_max_conns', '_allocated',
-        '_make_connection']
+        '_connect']
 
     def __init__(self, module, max_conns, *args, **kwargs):
         try:
@@ -354,8 +354,7 @@ class Pool(PoolBase):
         self._cond = threading.Condition()
         self._max_conns = max_conns
         self._allocated = 0
-        self._make_connection = functools.partial(
-                module.connect, *args, **kwargs)
+        self._connect = _make_connect(module, args, kwargs)
 
     def acquire(self):
         self._cond.acquire()
@@ -365,7 +364,7 @@ class Pool(PoolBase):
                     conn = self._pool.popleft()
                     break
                 elif self._allocated < self._max_conns:
-                    conn = self._make_connection()
+                    conn = self._connect()
                     self._allocated += 1
                     break
                 else:
@@ -396,6 +395,13 @@ class Pool(PoolBase):
         self._cond.release()
 
 # }}}
+
+def _make_connect(module, args, kwargs):
+    """
+    Returns a function capable of making connections with a particular
+    driver given the supplied credentials.
+    """
+    return functools.partial(module.connect, *args, **kwargs)
 
 def connect(module, *args, **kwargs):
     """
