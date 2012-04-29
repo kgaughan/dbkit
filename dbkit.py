@@ -76,15 +76,15 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['mgr', 'depth', '_log', '_factory'] + _EXCEPTIONS
+    __slots__ = ['mdr', 'depth', '_log', '_factory'] + _EXCEPTIONS
     state = threading.local()
 
-    def __init__(self, module, mgr):
+    def __init__(self, module, mdr):
         """
         Initialise a context with a given driver module and connection.
         """
         super(Context, self).__init__()
-        self.mgr = mgr
+        self.mdr = mdr
         self.depth = 0
         self._log = null_logger
         self._factory = tuple_set
@@ -158,7 +158,7 @@ class Context(object):
         Execute a statement, returning a cursor. For internal use only.
         """
         self._log(stmt, args)
-        with self.mgr as conn:
+        with self.mdr as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute(stmt, args)
@@ -180,7 +180,7 @@ class Context(object):
         only.
         """
         self._log(procname, args)
-        with self.mgr as conn:
+        with self.mdr as conn:
             cursor = conn.cursor()
             try:
                 cursor.callproc(procname, args)
@@ -205,9 +205,9 @@ class Context(object):
         for exc in _EXCEPTIONS:
             setattr(self, exc, None)
         try:
-            self.mgr.close()
+            self.mdr.close()
         finally:
-            self.mgr = None
+            self.mdr = None
 
 # }}}
 
@@ -452,7 +452,7 @@ def transaction():
     # The idea here is to fake the nesting of transactions. Only when we've
     # gotten back to the topmost transaction context do we actually commit
     # or rollback.
-    with ctx.mgr as conn:
+    with ctx.mdr as conn:
         try:
             ctx.depth += 1
             yield ctx
