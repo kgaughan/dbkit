@@ -141,6 +141,35 @@ def test_factory():
         assert row['counter'] == 'foo'
         assert row['value'] == 42
 
+def test_unpooled_disconnect():
+    ctx = setup()
+
+    # Test rollback of connection.
+    try:
+        with ctx:
+            try:
+                with dbkit.transaction():
+                    assert ctx.mdr.depth == 1
+                    assert ctx.mdr.conn is not None
+                    assert dbkit.query_value(GET_COUNTER, ('foo',)) == 42
+                    raise ctx.OperationalError("Simulating disconnect")
+            except:
+                assert ctx.mdr.depth == 0
+                assert ctx.mdr.conn is None
+                raise
+        assert False, "Should've raised OperationalError"
+    except ctx.OperationalError, exc:
+        assert ctx.mdr.depth == 0
+        assert ctx.mdr.conn is None
+        assert exc.message == "Simulating disconnect"
+
+    # Test reconnect. As we're running this all against an in-memory DB,
+    # everything in it will have been throttled, thus the only query we can
+    # do is query the list of tables, which will be empty.
+    with ctx:
+        assert len(list(dbkit.query_column(LIST_TABLES))) == 0
+        assert ctx.mdr.conn is not None
+
 def test_unindent_statement():
     assert dbkit.unindent_statement("foo\nbar") == "foo\nbar"
     assert dbkit.unindent_statement(" foo\n bar") == "foo\nbar"
