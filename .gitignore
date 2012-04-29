@@ -9,3 +9,5 @@
 /*.egg-info
 /MANIFEST
 _build/
+/cover
+.coverage
