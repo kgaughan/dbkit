@@ -16,6 +16,9 @@ dbkit
 involved in dealing with `DB-API 2`_ compatible database drivers.
 
 .. image:: https://secure.travis-ci.org/kgaughan/dbkit.png?branch=master
+   :width: 89px
+   :height: 13px 
+   :target: http://travis-ci.org/kgaughan/dbkit
 
 
 Overview
