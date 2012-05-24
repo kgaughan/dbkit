@@ -213,6 +213,7 @@ class Context(object):
 
 # Connection access mediation {{{
 
+# pylint: disable-msg=R0903
 class ConnectionMediatorBase(object):
     """
     Mediates connection acquisition and release from/to a pool.
@@ -228,6 +229,7 @@ class ConnectionMediatorBase(object):
 
     def __init__(self, exceptions):
         super(ConnectionMediatorBase, self).__init__()
+        # pylint: disable-msg=C0103
         self.OperationalError = exceptions.OperationalError
         # The currently acquired connection, or None.
         self.conn = None
@@ -268,6 +270,7 @@ class SingleConnectionMediator(ConnectionMediatorBase):
     def __exit__(self, exc_type, _exc_value, _traceback):
         self.depth -= 1
         if exc_type is self.OperationalError:
+            # pylint: disable-msg=W0702
             try:
                 self.conn.close()
             except:
@@ -318,6 +321,7 @@ class PooledConnectionMediator(ConnectionMediatorBase):
 
 # Pools {{{
 
+# pylint: disable-msg=R0922
 class PoolBase(object):
     """
     Abstract base class for all connection pools.
@@ -432,6 +436,7 @@ class Pool(PoolBase):
         while len(self._pool) < self._allocated:
             self._cond.wait()
         for conn in self._pool:
+            # pylint: disable-msg=W0702
             try:
                 self._allocated -= 1
                 conn.close()
@@ -446,6 +451,7 @@ def _make_connect(module, args, kwargs):
     Returns a function capable of making connections with a particular
     driver given the supplied credentials.
     """
+    # pylint: disable-msg=W0142
     return functools.partial(module.connect, *args, **kwargs)
 
 def connect(module, *args, **kwargs):
@@ -557,6 +563,7 @@ def transactional(wrapped):
                 "UPDATE pages SET owner_id = ? WHERE page_id = ?",
                 (new_owner_id, page_id))
     """
+    # pylint: disable-msg=C0111
     def wrapper(*args, **kwargs):
         with transaction():
             return wrapped(*args, **kwargs)
