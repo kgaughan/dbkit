@@ -180,13 +180,6 @@ class Context(object):
             cursor.execute(stmt, args)
             return cursor
 
-    def query(self, stmt, args, factory):
-        """
-        Executes a statement, returning a factory. For internal use only.
-        """
-        factory = self.default_factory if factory is None else factory
-        return factory(self.execute(stmt, args))
-
     def execute_proc(self, procname, args):
         """
         Execute a stored procedure, returning a cursor. For internal use
@@ -196,14 +189,6 @@ class Context(object):
         with self.cursor() as cursor:
             cursor.callproc(procname, args)
             return cursor
-
-    def query_proc(self, procname, args, factory):
-        """
-        Execute a stored procedure, returning a factory. For internal use
-        only.
-        """
-        factory = self.default_factory if factory is None else factory
-        return factory(self.execute_proc(procname, args))
 
     def close(self):
         """
@@ -567,13 +552,15 @@ def query(stmt, args=(), factory=None):
     """
     Execute a query. This returns an iterator of the result set.
     """
-    return Context.current().query(stmt, args, factory)
+    ctx = Context.current()
+    factory = ctx.default_factory if factory is None else factory
+    return factory(ctx.execute(stmt, args))
 
 def query_row(stmt, args=(), factory=None):
     """
     Execute a query. Returns the first row of the result set, or `None`
     """
-    for row in Context.current().query(stmt, args, factory):
+    for row in query(stmt, args, factory):
         return row
     return None
 
@@ -583,7 +570,7 @@ def query_value(stmt, args=(), default=None):
     result set. If the query returns no result set, a default value is
     returned, which is `None` by default.
     """
-    for row in Context.current().query(stmt, args, tuple_set):
+    for row in query(stmt, args, tuple_set):
         return row[0]
     return default
 
@@ -591,7 +578,7 @@ def query_column(stmt, args=()):
     """
     Execute a query, returning an iterable of the first column.
     """
-    return Context.current().query(stmt, args, column_set)
+    return query(stmt, args, column_set)
 
 # }}}
 
@@ -607,14 +594,16 @@ def query_proc(procname, args=(), factory=None):
     """
     Execute a stored procedure. This returns an iterator of the result set.
     """
-    return Context.current().query_proc(procname, args, factory)
+    ctx = Context.current()
+    factory = ctx.default_factory if factory is None else factory
+    return factory(ctx.execute_proc(procname, args))
 
 def query_proc_row(procname, args=(), factory=None):
     """
     Execute a stored procedure. Returns the first row of the result set,
     or `None`.
     """
-    for row in Context.current().query(procname, args, factory):
+    for row in query_proc(procname, args, factory):
         return row
     return None
 
@@ -624,7 +613,7 @@ def query_proc_value(procname, args=(), default=None):
     of the result set. If it returns no result set, a default value is
     returned, which is `None` by default.
     """
-    for row in Context.current().query_proc(procname, args, tuple_set):
+    for row in query_proc(procname, args, tuple_set):
         return row[0]
     return default
 
@@ -632,7 +621,7 @@ def query_proc_column(procname, args=()):
     """
     Execute a stored procedure, returning an iterable of the first column.
     """
-    return Context.current().query_proc(procname, args, column_set)
+    return query_proc(procname, args, column_set)
 
 # }}}
 
