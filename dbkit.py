@@ -131,6 +131,19 @@ class Context(object):
 
     # }}}
 
+    @contextlib.contextmanager
+    def cursor(self):
+        """
+        Get a cursor for the current connection. For internal use only.
+        """
+        with self.mdr as conn:
+            cursor = conn.cursor()
+            try:
+                yield cursor
+            except:
+                cursor.close()
+                raise
+
     def set_logger(self, logger):
         """
         Sets the function used for logging statements and their arguments.
@@ -158,14 +171,9 @@ class Context(object):
         Execute a statement, returning a cursor. For internal use only.
         """
         self._log(stmt, args)
-        with self.mdr as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute(stmt, args)
-            except:
-                cursor.close()
-                raise
-        return cursor
+        with self.cursor() as cursor:
+            cursor.execute(stmt, args)
+            return cursor
 
     def query(self, stmt, args, factory):
         """
@@ -180,14 +188,9 @@ class Context(object):
         only.
         """
         self._log(procname, args)
-        with self.mdr as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.callproc(procname, args)
-            except:
-                cursor.close()
-                raise
-        return cursor
+        with self.cursor() as cursor:
+            cursor.callproc(procname, args)
+            return cursor
 
     def query_proc(self, procname, args, factory):
         """
