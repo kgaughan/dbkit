@@ -4,8 +4,6 @@
 Reference
 =========
 
-
-
 .. autofunction:: dbkit.connect
 
 .. autofunction:: dbkit.context
@@ -15,14 +13,33 @@ Contexts
 ========
 
 Contexts wrap a notional database connection. They're returned by the
-`dbkit.connect` function. Methods are for the internal use of dbkit only
-though it does expose a method for closing the database connection when
-you're done with it and contains references for each of the exceptions
-exposed by the connection's database driver. For a list of these
-exceptions, see `PEP-0249`_.
+:py:func:`dbkit.connect` function. Methods are for the internal use of dbkit
+only though it does expose a method for closing the database connection when
+you're done with it and contains references for each of the exceptions exposed
+by the connection's database driver. For a list of these exceptions, see
+`PEP-0249`_.
 
 .. autoclass:: dbkit.Context
-   :members: close, set_factory, set_logger
+   :members: close
+
+   .. attribute:: default_factory
+
+      The row factory used for generating rows from :py:func:`dbkit.query` and
+      :py:func:`dbkit.query_row`. The default is :py:func:`dbkit.tuple_set`.
+
+      The factory function should take a cursor an return an iterable over the
+      current resultset.
+
+   .. attribute:: logger
+
+      The function used for logging statements and their arguments.
+
+      The logging function should take two arguments: the query and a
+      sequence of query arguments.
+
+      There are two supplied logging functions: :py:func:`dbkit.null_logger`,
+      the default, logs nothing, while :py:func:`dbkit.stderr_logger` logs its
+      arguments to stderr.
 
 
 Exceptions
@@ -80,13 +97,13 @@ database context, if the DBMS supports stored procedures.
 Result generators
 =================
 
-Result generators are generator functions that are used internally by
-dbkit to take the results from a database cursor and turn them into a
-form that's easier to deal with programmatically, such a sequence of
-tuples or a sequence of dictionaries, where each tuple or dictionary
-represents a row of the result set. By default, `dbkit.tuple_set` is
-used as the result generator, but you can change this by passing another,
-such as `dbkit.dict_set` into the function `dbkit.set_factory` function.
+Result generators are generator functions that are used internally by dbkit to
+take the results from a database cursor and turn them into a form that's easier
+to deal with programmatically, such a sequence of tuples or a sequence of
+dictionaries, where each tuple or dictionary represents a row of the result set.
+By default, :py:func:`dbkit.tuple_set` is used as the result generator, but you
+can change this by assigning another, such as :py:func:`dbkit.dict_set` to
+:py:attr:`dbkit.Context.default_factory` function.
 
 Some query functions allow you to specify the result generator to be used
 for the result, which is passed in using the `factory` parameter.
@@ -101,12 +118,12 @@ for the result, which is passed in using the `factory` parameter.
 Loggers
 =======
 
-Loggers are functions that you can pass to `dbkit.set_logger` to have
-dbkit log any SQL statements ran or stored procedures called to some
-sink. dbkit comes with a number of simple loggers listed below. To
-create your own logger, simply create a function that takes two arguments,
-the first of which is the SQL statement or stored procedure name, and the
-second is a sequence of arguments that were passed with it.
+Loggers are functions that you can assign to :py:attr:`dbkit.Context.logger` to
+have dbkit log any SQL statements ran or stored procedures called to some sink.
+dbkit comes with a number of simple loggers listed below. To create your own
+logger, simply create a function that takes two arguments, the first of which
+is the SQL statement or stored procedure name, and the second is a sequence of
+arguments that were passed with it.
 
 .. autofunction:: dbkit.null_logger
 
