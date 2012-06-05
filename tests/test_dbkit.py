@@ -50,7 +50,7 @@ def test_bad_connect():
     try:
         with dbkit.connect(sqlite3, '/nonexistent.db') as ctx:
             # Wouldn't do this in real code as the mediator is private.
-            with ctx.mdr:
+            with ctx._mdr:
                 pass
         assert False, "Should not have been able to open database."
     except sqlite3.OperationalError:
@@ -68,7 +68,7 @@ def test_context():
         assert len(ctx.state.stack) == 1
 
         assert dbkit.Context.current(with_exception=False) is ctx
-        assert ctx.mdr is not None
+        assert ctx._mdr is not None
         assert ctx.logger is not None
     ctx.close()
     try:
@@ -76,7 +76,7 @@ def test_context():
         assert False, "Should not have been able to access context."
     except:
         pass
-    assert ctx.mdr is None
+    assert ctx._mdr is None
     assert ctx.logger is None
     assert len(ctx.state.stack) == 0
 
@@ -103,11 +103,11 @@ def test_transaction():
         dbkit.execute(SCHEMA)
 
         # First, make sure the normal case behaves correctly.
-        assert dbkit.context().depth == 0
+        assert dbkit.context()._depth == 0
         with dbkit.transaction():
-            assert dbkit.context().depth == 1
+            assert dbkit.context()._depth == 1
             dbkit.execute(TEST_DATA)
-        assert dbkit.context().depth == 0
+        assert dbkit.context()._depth == 0
         assert dbkit.query_value(GET_COUNTER, ('foo',)) == 42
         assert dbkit.query_value(GET_COUNTER, ('bar',)) is None
 
@@ -165,18 +165,18 @@ def test_unpooled_disconnect():
         with ctx:
             try:
                 with dbkit.transaction():
-                    assert ctx.mdr.depth == 1
-                    assert ctx.mdr.conn is not None
+                    assert ctx._mdr.depth == 1
+                    assert ctx._mdr.conn is not None
                     assert dbkit.query_value(GET_COUNTER, ('foo',)) == 42
                     raise ctx.OperationalError("Simulating disconnect")
             except:
-                assert ctx.mdr.depth == 0
-                assert ctx.mdr.conn is None
+                assert ctx._mdr.depth == 0
+                assert ctx._mdr.conn is None
                 raise
         assert False, "Should've raised OperationalError"
     except ctx.OperationalError, exc:
-        assert ctx.mdr.depth == 0
-        assert ctx.mdr.conn is None
+        assert ctx._mdr.depth == 0
+        assert ctx._mdr.conn is None
         assert exc.message == "Simulating disconnect"
 
     # Test reconnect. As we're running this all against an in-memory DB,
@@ -184,7 +184,7 @@ def test_unpooled_disconnect():
     # do is query the list of tables, which will be empty.
     with ctx:
         assert len(list(dbkit.query_column(LIST_TABLES))) == 0
-        assert ctx.mdr.conn is not None
+        assert ctx._mdr.conn is not None
 
     ctx.close()
 

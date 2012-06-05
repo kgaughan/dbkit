@@ -76,7 +76,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['mdr', 'depth', 'logger', 'default_factory'] + _EXCEPTIONS
+    __slots__ = ['_mdr', '_depth', 'logger', 'default_factory'] + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, mdr):
@@ -84,8 +84,8 @@ class Context(object):
         Initialise a context with a given driver module and connection.
         """
         super(Context, self).__init__()
-        self.mdr = mdr
-        self.depth = 0
+        self._mdr = mdr
+        self._depth = 0
         self.logger = null_logger
         self.default_factory = tuple_set
         # Copy driver module's exception references.
@@ -140,22 +140,22 @@ class Context(object):
         # The idea here is to fake the nesting of transactions. Only when
         # we've gotten back to the topmost transaction context do we actually
         # commit or rollback.
-        with self.mdr as conn:
+        with self._mdr as conn:
             try:
-                self.depth += 1
+                self._depth += 1
                 yield self
-                self.depth -= 1
-            except self.mdr.OperationalError:
+                self._depth -= 1
+            except self._mdr.OperationalError:
                 # We've lost the connection, so there's no sense in
                 # attempting to roll back back the transaction.
-                self.depth -= 1
+                self._depth -= 1
                 raise
             except:
-                self.depth -= 1
-                if self.depth == 0:
+                self._depth -= 1
+                if self._depth == 0:
                     conn.rollback()
                 raise
-            if self.depth == 0:
+            if self._depth == 0:
                 conn.commit()
 
     @contextlib.contextmanager
@@ -163,7 +163,7 @@ class Context(object):
         """
         Get a cursor for the current connection. For internal use only.
         """
-        with self.mdr as conn:
+        with self._mdr as conn:
             cursor = conn.cursor()
             try:
                 yield cursor
@@ -198,9 +198,9 @@ class Context(object):
         for exc in _EXCEPTIONS:
             setattr(self, exc, None)
         try:
-            self.mdr.close()
+            self._mdr.close()
         finally:
-            self.mdr = None
+            self._mdr = None
 
 # }}}
 
