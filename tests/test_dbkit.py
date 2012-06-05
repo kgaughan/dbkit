@@ -69,7 +69,7 @@ def test_context():
 
         assert dbkit.Context.current(with_exception=False) is ctx
         assert ctx.mdr is not None
-        assert ctx._log is not None
+        assert ctx.logger is not None
     ctx.close()
     try:
         dbkit.context()
@@ -77,7 +77,7 @@ def test_context():
     except:
         pass
     assert ctx.mdr is None
-    assert ctx._log is None
+    assert ctx.logger is None
     assert len(ctx.state.stack) == 0
 
 def test_create_table():
@@ -142,7 +142,7 @@ def test_transaction_decorator():
 
 def test_factory():
     with setup() as ctx:
-        ctx.set_factory(dbkit.dict_set)
+        ctx.default_factory = dbkit.dict_set
         row = dbkit.query_row("""
             SELECT counter, value FROM counters WHERE counter = ?
             """, ('foo',))

@@ -76,7 +76,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['mdr', 'depth', '_log', '_factory'] + _EXCEPTIONS
+    __slots__ = ['mdr', 'depth', 'logger', 'default_factory'] + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, mdr):
@@ -86,8 +86,8 @@ class Context(object):
         super(Context, self).__init__()
         self.mdr = mdr
         self.depth = 0
-        self._log = null_logger
-        self._factory = tuple_set
+        self.logger = null_logger
+        self.default_factory = tuple_set
         # Copy driver module's exception references.
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
@@ -171,33 +171,11 @@ class Context(object):
                 cursor.close()
                 raise
 
-    def set_logger(self, logger):
-        """
-        Sets the function used for logging statements and their arguments.
-
-        The logging function should take two arguments: the query and a
-        sequence of query arguments.
-
-        There are two supplied logging functions: `null_logger` logs
-        nothing, while `stderr_logger` logs its arguments to stderr.
-        """
-        self._log = logger
-
-    def set_factory(self, factory):
-        """
-        Sets the row factory used for generating rows from `query` and
-        `query_row`.
-
-        The factory function should take a cursor an return an iterable
-        over the current resultset.
-        """
-        self._factory = factory
-
     def execute(self, stmt, args):
         """
         Execute a statement, returning a cursor. For internal use only.
         """
-        self._log(stmt, args)
+        self.logger(stmt, args)
         with self.cursor() as cursor:
             cursor.execute(stmt, args)
             return cursor
@@ -206,7 +184,7 @@ class Context(object):
         """
         Executes a statement, returning a factory. For internal use only.
         """
-        factory = self._factory if factory is None else factory
+        factory = self.default_factory if factory is None else factory
         return factory(self.execute(stmt, args))
 
     def execute_proc(self, procname, args):
@@ -214,7 +192,7 @@ class Context(object):
         Execute a stored procedure, returning a cursor. For internal use
         only.
         """
-        self._log(procname, args)
+        self.logger(procname, args)
         with self.cursor() as cursor:
             cursor.callproc(procname, args)
             return cursor
@@ -224,14 +202,14 @@ class Context(object):
         Execute a stored procedure, returning a factory. For internal use
         only.
         """
-        factory = self._factory if factory is None else factory
+        factory = self.default_factory if factory is None else factory
         return factory(self.execute_proc(procname, args))
 
     def close(self):
         """
         Close the connection this context wraps.
         """
-        self._log = None
+        self.logger = None
         for exc in _EXCEPTIONS:
             setattr(self, exc, None)
         try:
