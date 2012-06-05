@@ -132,6 +132,33 @@ class Context(object):
     # }}}
 
     @contextlib.contextmanager
+    def transaction(self):
+        """
+        Sets up a context where all the statements within it are ran within
+        a single database transaction. For internal use only.
+        """
+        # The idea here is to fake the nesting of transactions. Only when
+        # we've gotten back to the topmost transaction context do we actually
+        # commit or rollback.
+        with self.mdr as conn:
+            try:
+                self.depth += 1
+                yield self
+                self.depth -= 1
+            except self.mdr.OperationalError:
+                # We've lost the connection, so there's no sense in
+                # attempting to roll back back the transaction.
+                self.depth -= 1
+                raise
+            except:
+                self.depth -= 1
+                if self.depth == 0:
+                    conn.rollback()
+                raise
+            if self.depth == 0:
+                conn.commit()
+
+    @contextlib.contextmanager
     def cursor(self):
         """
         Get a cursor for the current connection. For internal use only.
@@ -474,7 +501,6 @@ def context():
     """
     return Context.current()
 
-@contextlib.contextmanager
 def transaction():
     """
     Sets up a context where all the statements within it are ran within a
@@ -509,28 +535,7 @@ def transaction():
                     "UPDATE pages SET owner_id = ? WHERE page_id = ?",
                     (new_owner_id, page_id))
     """
-    ctx = Context.current()
-
-    # The idea here is to fake the nesting of transactions. Only when we've
-    # gotten back to the topmost transaction context do we actually commit
-    # or rollback.
-    with ctx.mdr as conn:
-        try:
-            ctx.depth += 1
-            yield ctx
-            ctx.depth -= 1
-        except ctx.mdr.OperationalError:
-            # We've lost the connection, so there's no sense in attempting
-            # to roll back back the transaction.
-            ctx.depth -= 1
-            raise
-        except:
-            ctx.depth -= 1
-            if ctx.depth == 0:
-                conn.rollback()
-            raise
-        if ctx.depth == 0:
-            conn.commit()
+    return Context.current().transaction()
 
 def transactional(wrapped):
     """
@@ -568,7 +573,7 @@ def transactional(wrapped):
     """
     # pylint: disable-msg=C0111
     def wrapper(*args, **kwargs):
-        with transaction():
+        with Context.current().transaction():
             return wrapped(*args, **kwargs)
     return functools.update_wrapper(wrapper, wrapped)
 
