@@ -53,21 +53,21 @@ class NoContext(StandardError):
     """
     You are attempting to use dbkit outside of a database context.
     """
-    pass
+    __slots__ = ()
 
 
 class NotSupported(StandardError):
     """
     You are attempting something unsupported.
     """
-    pass
+    __slots__ = ()
 
 
 class AbortTransaction(Exception):
     """
     Raised to signal that code within the transaction wants to abort it.
     """
-    pass
+    __slots__ = ()
 
 # Contexts {{{
 
