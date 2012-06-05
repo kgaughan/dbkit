@@ -18,7 +18,7 @@ import sys
 import threading
 
 
-__all__ = [
+__all__ = (
     'NoContext', 'NotSupported', 'AbortTransaction',
     'PoolBase', 'Pool',
     'connect', 'context',
@@ -27,13 +27,13 @@ __all__ = [
     'execute_proc', 'query_proc_row', 'query_proc_value', 'query_proc_column',
     'dict_set', 'tuple_set',
     'unindent_statement',
-    'null_logger', 'stderr_logger']
+    'null_logger', 'stderr_logger')
 
 __version__ = '0.1.0'
 
 
 # DB-API 2 exceptions exposed by all drivers.
-_EXCEPTIONS = [
+_EXCEPTIONS = (
     'Warning',
     'Error',
     'InterfaceError',
@@ -43,7 +43,7 @@ _EXCEPTIONS = [
     'IntegrityError',
     'InternalError',
     'ProgrammingError',
-    'NotSupportedError']
+    'NotSupportedError')
 
 # For the module's own internal logging.
 LOG = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ class Context(object):
     A database connection context.
     """
 
-    __slots__ = ['_mdr', '_depth', 'logger', 'default_factory'] + _EXCEPTIONS
+    __slots__ = ('_mdr', '_depth', 'logger', 'default_factory') + _EXCEPTIONS
     state = threading.local()
 
     def __init__(self, module, mdr):
@@ -218,7 +218,7 @@ class ConnectionMediatorBase(object):
     0.
     """
 
-    __slots__ = ['OperationalError', 'conn', 'depth']
+    __slots__ = ('OperationalError', 'conn', 'depth')
 
     def __init__(self, exceptions):
         super(ConnectionMediatorBase, self).__init__()
@@ -247,7 +247,7 @@ class SingleConnectionMediator(ConnectionMediatorBase):
     Mediates access to a single unpooled connection.
     """
 
-    __slots__ = ['connect']
+    __slots__ = ('connect',)
 
     def __init__(self, module, connect_):
         super(SingleConnectionMediator, self).__init__(module)
@@ -283,7 +283,7 @@ class PooledConnectionMediator(ConnectionMediatorBase):
     Mediates connection acquisition and release from/to a pool.
     """
 
-    __slots__ = ['pool']
+    __slots__ = ('pool',)
 
     def __init__(self, pool):
         super(PooledConnectionMediator, self).__init__(pool)
@@ -320,7 +320,7 @@ class PoolBase(object):
     Abstract base class for all connection pools.
     """
 
-    __slots__ = ['module'] + _EXCEPTIONS
+    __slots__ = ('module',) + _EXCEPTIONS
 
     def __init__(self, module):
         super(PoolBase, self).__init__()
@@ -374,10 +374,10 @@ class Pool(PoolBase):
     A very simple connection pool.
     """
 
-    __slots__ = [
+    __slots__ = (
         '_pool', '_cond',
         '_max_conns', '_allocated',
-        '_connect']
+        '_connect')
 
     def __init__(self, module, max_conns, *args, **kwargs):
         try:
@@ -686,7 +686,7 @@ def unindent_statement(stmt):
         if stripped != '':
             prefix = len(line) - len(stripped)
             break
-    return "\n".join([line[prefix:] for line in lines])
+    return "\n".join(line[prefix:] for line in lines)
 
 # }}}
 
