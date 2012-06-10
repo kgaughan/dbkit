@@ -266,7 +266,7 @@ class SingleConnectionMediator(ConnectionMediatorBase):
             # pylint: disable-msg=W0702
             try:
                 self.conn.close()
-            except:
+            except: # pragma: no cover
                 pass
             self.conn = None
 
@@ -433,7 +433,7 @@ class Pool(PoolBase):
             try:
                 self._allocated -= 1
                 conn.close()
-            except:
+            except: # pragma: no cover
                 pass
         self._cond.release()
 
