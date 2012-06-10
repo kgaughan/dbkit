@@ -12,7 +12,6 @@ import collections
 import contextlib
 import datetime
 import functools
-import logging
 import pprint
 import sys
 import threading
@@ -26,7 +25,7 @@ __all__ = (
     'execute', 'query_row', 'query_value', 'query_column',
     'execute_proc', 'query_proc_row', 'query_proc_value', 'query_proc_column',
     'dict_set', 'tuple_set',
-    'unindent_statement',
+    'unindent_statement', 'make_file_object_logger',
     'null_logger', 'stderr_logger')
 
 __version__ = '0.1.0'
@@ -44,9 +43,6 @@ _EXCEPTIONS = (
     'InternalError',
     'ProgrammingError',
     'NotSupportedError')
-
-# For the module's own internal logging.
-LOG = logging.getLogger(__name__)
 
 
 class NoContext(StandardError):
