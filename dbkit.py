@@ -477,7 +477,7 @@ def transaction():
 
         import sqlite3
         import sys
-        from dbkit import connect, transaction, query_value, execute, context
+        from dbkit import connect, transaction, query_value, execute
 
         # ...do some stuff...
 
@@ -514,7 +514,7 @@ def transactional(wrapped):
 
         import sqlite3
         import sys
-        from dbkit import connect, transactional, query_value, execute, context
+        from dbkit import connect, transactional, query_value, execute
 
         # ...do some stuff...
 
