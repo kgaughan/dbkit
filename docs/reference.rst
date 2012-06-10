@@ -127,11 +127,12 @@ arguments that were passed with it.
 
 .. autofunction:: dbkit.null_logger
 
+.. autofunction:: dbkit.make_file_object_logger
+
 .. function:: dbkit.stderr_logger(stmt, args)
 
    A logger that logs to standard error.
 
-.. auto_function:: dbkit.make_file_object_logger
 
 Utilities
 =========
