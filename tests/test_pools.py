@@ -65,3 +65,10 @@ def test_contention():
             with dbkit.transaction():
                 pass
     utils.spawn([wait_on_connection, hog_connection])
+
+def test_finalise():
+    assert POOL._allocated == 1
+    assert len(POOL._pool) == 1
+    POOL.finalise()
+    assert POOL._allocated == 0
+    assert len(POOL._pool) == 0

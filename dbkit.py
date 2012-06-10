@@ -439,6 +439,7 @@ class Pool(PoolBase):
                 conn.close()
             except: # pragma: no cover
                 pass
+        self._pool.clear()
         self._cond.release()
 
 # }}}
