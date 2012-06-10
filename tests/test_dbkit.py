@@ -206,4 +206,13 @@ def test_make_file_object_logger():
     captured.close()
     assert value == "STATEMENT\nArguments:\n(23, 42)\n"
 
+def test_logging():
+    with dbkit.connect(sqlite3, ':memory:') as ctx:
+        captured = StringIO.StringIO()
+        ctx.logger = dbkit.make_file_object_logger(captured)
+        dbkit.query_column(LIST_TABLES)
+    value = utils.skip_first_line(captured.getvalue())
+    captured.close()
+    assert value == "%s\nArguments:\n()\n" % (LIST_TABLES,)
+
 # vim:set et ai:
