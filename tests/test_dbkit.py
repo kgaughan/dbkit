@@ -4,7 +4,7 @@ import StringIO
 import types
 
 import dbkit
-from tests import utils
+from tests import utils, fakedb
 
 
 SCHEMA = """
@@ -214,5 +214,19 @@ def test_logging():
     value = utils.skip_first_line(captured.getvalue())
     captured.close()
     assert value == "%s\nArguments:\n()\n" % (LIST_TABLES,)
+
+def test_procs():
+    with dbkit.connect(fakedb, 'db') as ctx:
+        dbkit.execute_proc('execute_proc')
+        dbkit.query_proc_row('query_proc_row')
+        dbkit.query_proc_value('query_proc_value')
+        list(dbkit.query_proc_column('query_proc_column'))
+        conn = ctx._mdr.conn
+    assert conn.executed == 4
+    assert conn.session == [
+            'cursor', 'proc:execute_proc', 'cursor-close',
+            'cursor', 'proc:query_proc_row', 'cursor-close',
+            'cursor', 'proc:query_proc_value', 'cursor-close',
+            'cursor', 'proc:query_proc_column', 'cursor-close']
 
 # vim:set et ai:
