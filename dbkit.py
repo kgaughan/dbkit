@@ -698,15 +698,23 @@ def null_logger(_stmt, _args):
     """
     pass
 
-def stderr_logger(stmt, args):
+def make_file_object_logger(fh):
     """
-    A logger that logs everything sent to it to standard error.
+    Make a logger that logs to the given file object.
     """
-    now = datetime.datetime.now()
-    print >> sys.stderr, "Executing (%s):" % now.isoformat()
-    print >> sys.stderr, unindent_statement(stmt)
-    print >> sys.stderr, "Arguments:"
-    pprint.pprint(args, sys.stderr)
+    def logger(stmt, args, fh=fh):
+        """
+        A logger that logs everything sent to a file object.
+        """
+        now = datetime.datetime.now()
+        print >> fh, "Executing (%s):" % now.isoformat()
+        print >> fh, unindent_statement(stmt)
+        print >> fh, "Arguments:"
+        pprint.pprint(args, fh)
+    return logger
+
+# pylint:disable-msg=C0103
+stderr_logger = make_file_object_logger(sys.stderr)
 
 # }}}
 

@@ -1,6 +1,6 @@
 from __future__ import with_statement
-from contextlib import closing
 import sqlite3
+import StringIO
 import types
 
 import dbkit
@@ -194,5 +194,15 @@ def test_unindent_statement():
     assert dbkit.unindent_statement("  foo\n  bar") == "foo\nbar"
     assert dbkit.unindent_statement(" foo\n  bar") == "foo\n bar"
     assert dbkit.unindent_statement("  foo\n bar") == "foo\nar"
+
+def test_make_file_object_logger():
+    captured = StringIO.StringIO()
+    logger = dbkit.make_file_object_logger(captured)
+    logger("STATEMENT", (23, 42))
+    # When we get the value, we want to skip the first line, which changes
+    # with every call as it contains a date.
+    value = "\n".join(captured.getvalue().split("\n")[1:])
+    captured.close()
+    assert value == "STATEMENT\nArguments:\n(23, 42)\n"
 
 # vim:set et ai:
