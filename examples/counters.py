@@ -1,12 +1,12 @@
+"""A counter management tool."""
+
 from contextlib import closing
-import sqlite
-import sys
+import sqlite3
 
 import aaargh
 
 from dbkit import (
-    connect, execute, query, query_value, query_column,
-    transaction, transactional, tuple_set, dict_set)
+    connect, execute, query, query_value, query_column, transactional)
 
 app = aaargh.App(description='A counter management tool.')
 
@@ -47,7 +47,11 @@ def list_counters():
 @transactional
 def increment_counter(counter, by):
     """Modify the value of a counter by a certain amount."""
-    update_counter(counter, get_counter(counter) + by)
+    set_counter(counter, get_counter(counter) + by)
+
+def dump_counters():
+    """Query the database for all counters and their values."""
+    return query('SELECT counter, value FROM counters')
 
 @app.cmd(name='dump')
 def print_counters_and_values():
@@ -56,5 +60,6 @@ def print_counters_and_values():
         print "%s: %d" % (counter, value)
 
 if __name__ == '__main__':
-    with context(sqlite, 'counters.sqlite') as ctx, closing(ctx):
-        app.run()
+    with connect(sqlite3, 'counters.sqlite') as ctx:
+        with closing(ctx):
+            app.run()

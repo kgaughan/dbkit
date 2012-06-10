@@ -25,14 +25,12 @@ You should now have the database set up.
 Now let's import some of the libraries we'll be needing for this project::
 
     from contextlib import closing
-    import sqlite
-    import sys
+    import sqlite3
 
     import aaargh
 
     from dbkit import (
-        connect, execute, query, query_value, query_column,
-        transaction, transactional, tuple_set, dict_set)
+        connect, execute, query, query_value, query_column, transactional)
 
     app = aaargh.App(description='A counter management tool.')
 
@@ -113,13 +111,13 @@ decorator you can apply to your functions called
     @transactional
     def increment_counter(counter, by):
         """Modify the value of a counter by a certain amount."""
-        update_counter(counter, get_counter(counter) + by)
+        set_counter(counter, get_counter(counter) + by)
 
 Or you can use the :py:func:`dbkit.transaction` context manager::
  
     def increment_counter2(counter, by):
         with transaction():
-            update_counter(counter, get_counter(counter) + by)
+            set_counter(counter, get_counter(counter) + by)
 
 Both are useful in different circumstances.
 
@@ -136,7 +134,7 @@ so::
     def print_counters_and_values():
         """List all the counters and their values."""
         for counter, value in dump_counters():
-            print "%s: %d" % (counter, value)
+            print '%s: %d' % (counter, value)
 
 By default, query() will use tuples for each result set row, but if you'd
 prefer dictionaries, all you have to do is pass in a different row factory
@@ -155,7 +153,7 @@ like so::
 
     def print_counters_and_values2():
         for row in dump_counters_dict():
-            print "%s: %d" % (row['counter'], row['value'])
+            print '%s: %d' % (row['counter'], row['value'])
 
 Now we have enough for our counter management application, so lets start
 on the subcommand function. We'll have the following subcommands: `set`,
@@ -167,8 +165,9 @@ as its first argument, and any parameters you'd pass to that module's
 arguments::
 
     if __name__ == '__main__':
-        with context(sqlite, 'counters.sqlite') as ctx, closing(ctx):
-            app.run()
+        with context(sqlite3, 'counters.sqlite') as ctx:
+            with closing(ctx):
+                app.run()
 
 And bingo! You now has a simple counter manipulation tool.
 
