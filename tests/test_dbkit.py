@@ -4,6 +4,7 @@ import StringIO
 import types
 
 import dbkit
+from tests import utils
 
 
 SCHEMA = """
@@ -201,7 +202,7 @@ def test_make_file_object_logger():
     logger("STATEMENT", (23, 42))
     # When we get the value, we want to skip the first line, which changes
     # with every call as it contains a date.
-    value = "\n".join(captured.getvalue().split("\n")[1:])
+    value = utils.skip_first_line(captured.getvalue())
     captured.close()
     assert value == "STATEMENT\nArguments:\n(23, 42)\n"
 

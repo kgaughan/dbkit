@@ -17,3 +17,8 @@ def capture_stderr():
         yield captured
     finally:
         sys.stderr = old_stderr
+
+def skip_first_line(value):
+    """Returns everything after the first newline in the string."""
+    parts = value.split("\n", 1)
+    return parts[1] if len(parts) == 2 else ''
