@@ -401,6 +401,10 @@ class Pool(PoolBase):
                     conn = self._pool.popleft()
                     break
                 elif self._allocated < self._max_conns:
+                    # XXX If the user didn't pass in enough arguments for
+                    # the connect function, this will throw a TypeError.
+                    # It would probably be wise to catch this and convert
+                    # the error to something more apt.
                     conn = self._connect()
                     self._allocated += 1
                     break
