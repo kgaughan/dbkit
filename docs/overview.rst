@@ -4,6 +4,14 @@
 Overview
 ========
 
+.. note::
+   Like dbkit itself, this documentation is a work in progress. Unlike
+   dbkit, it is nowhere near complete yet. Bear with me.
+
+
+Introduction
+============
+
 *dbkit* is intended to be used in circumstances where it is impractical
 or overkill to use an ORM such as `SQLObject`_ or `SQLAlchemy`_, but it
 would be useful to at least abstract away some of the pain involved in
@@ -35,3 +43,32 @@ Non-aims:
 .. _SQLObject: http://sqlobject.org/
 .. _SQLAlchemy: http://sqlalchemy.org/
 .. _context: http://docs.python.org/library/contextlib.html
+
+
+Download
+========
+
+The latest *development* version can be found in the `dbkit` Git repository::
+
+    git clone https://github.com/kgaughan/dbkit
+
+The project has yet to be submitted to PyPI, but I'm hoping to do that as soon
+as I'm happy with the documentation. To build a source package for installation
+and subsequently install it, do::
+
+   python setup.py sdist
+   pip install dist/dbkit-0.1.0.tar.gz
+
+Alternatively, you can install it directly, bypassing package creation::
+
+   python setup.py install
+
+
+Requirements
+============
+
+`dbkit` will work with Python 2.5, 2.6, and 2.7 without issue. It appears to
+have some minor issues with PyPy, but it ought to work fine. It's not yet
+compatible with Python 3.
+
+`dbkit` has no dependencies other than requiring a database driver.
