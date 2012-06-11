@@ -20,6 +20,9 @@ You'll find that file in the `examples` directory, and it's called
 
 You should now have the database set up.
 
+You'll find the file we'll be working on in the examples as
+:ref:`counters-py-example`.
+
 Now let's import some of the libraries we'll be needing for this project:
 
 .. literalinclude:: ../examples/counters.py
