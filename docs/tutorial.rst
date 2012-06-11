@@ -122,7 +122,7 @@ on the main function. We'll have the following subcommands: `set`, `get`,
 `del`, `list`, `incr`, `list`, and `dump`. The `dispatch()` function below
 deals with calling the right function based on the command line arguments,
 so all we need to create a database connection context with
-:py:func:`dbkit.context`. It takes the database driver module as its first
+:py:func:`dbkit.connect`. It takes the database driver module as its first
 argument, and any parameters you'd pass to that module's `connect()`
 function to create a new connection as its remaining arguments:
 
