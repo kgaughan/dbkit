@@ -29,6 +29,8 @@ __all__ = (
     'null_logger', 'stderr_logger')
 
 __version__ = '0.1.0'
+__author__ = 'Keith Gaughan'
+__email__ = 'k@stereochro.me'
 
 
 # DB-API 2 exceptions exposed by all drivers.

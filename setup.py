@@ -1,26 +1,19 @@
 #!/usr/bin/env python
 
-from __future__ import with_statement
-
-from os import path
 from distutils.core import setup
 import dbkit
-
-def read_package_file(package_path):
-    """Reads a file from within the package. Genius, no?"""
-    with open(path.join(path.dirname(__file__), package_path)) as hdl:
-        return hdl.read()
 
 setup(
     name='dbkit',
     version=dbkit.__version__,
     description='DB-API made easier',
-    long_description=read_package_file('README'),
+    long_description=open('README').read(),
+    license=open('LICENCE').read(),
     url='https://github.com/kgaughan/dbkit/',
     py_modules=['dbkit'],
 
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
@@ -29,7 +22,8 @@ setup(
         'Topic :: Database',
     ],
 
-    author='Keith Gaughan',
-    author_email='k@stereochro.me')
-
-# vim:set et ai:
+    author=dbkit.__author__,
+    author_email=dbkit.__email__,
+    maintainer=dbkit.__author__,
+    maintainer_email=dbkit.__email__
+)
