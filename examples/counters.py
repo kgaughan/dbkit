@@ -7,27 +7,6 @@ import sys
 
 from dbkit import connect, execute, query, query_value, query_column, transaction
 
-def increment_counter(counter, by):
-    """Modify the value of a counter by a certain amount."""
-    with transaction():
-        execute(
-            'UPDATE counters SET value = value + ? WHERE counter = ?',
-            (by, counter))
-
-def set_counter(counter, value):
-    """Set a counter."""
-    with transaction():
-        execute('DELETE FROM counters WHERE counter = ?', (counter,))
-        execute(
-            'INSERT INTO counters (counter, value) VALUES (?, ?)',
-            (counter, value))
-
-def delete_counter(counter):
-    """Delete a counter."""
-    with transaction():
-        execute(
-            'DELETE FROM counters WHERE counter = ?',
-            (counter,))
 
 def get_counter(counter):
     """Get the value of a counter."""
@@ -35,6 +14,27 @@ def get_counter(counter):
         'SELECT value FROM counters WHERE counter = ?',
         (counter,),
         default=0)
+
+def set_counter(counter, value):
+    """Set a counter."""
+    with transaction():
+        execute(
+            'REPLACE INTO counters (counter, value) VALUES (?, ?)',
+            (counter, value))
+
+def increment_counter(counter, by):
+    """Modify the value of a counter by a certain amount."""
+    with transaction():
+        execute(
+            'UPDATE counters SET value = value + ? WHERE counter = ?',
+            (by, counter))
+
+def delete_counter(counter):
+    """Delete a counter."""
+    with transaction():
+        execute(
+            'DELETE FROM counters WHERE counter = ?',
+            (counter,))
 
 def list_counters():
     """List the names of all the stored counters."""
