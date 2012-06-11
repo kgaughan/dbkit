@@ -15,6 +15,7 @@ involved in dealing with `DB-API 2`_ compatible database drivers.
 
    overview
    tutorial
+   examples
    reference
 
 
