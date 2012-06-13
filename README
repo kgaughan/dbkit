@@ -20,6 +20,16 @@ involved in dealing with `DB-API 2`_ compatible database drivers.
    :height: 13px 
    :target: http://travis-ci.org/kgaughan/dbkit
 
+::
+
+    from dbkit import connect, query
+    from contextlib import closing
+    import sqlite3
+
+    with connect(sqlite3, 'counters.db') as ctx, closing(ctx):
+        for counter, value in query('SELECT counter, value FROM counters'):
+            print "%s: %d" % (counter, value)
+
 
 Overview
 ========

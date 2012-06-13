@@ -45,6 +45,36 @@ Non-aims:
 .. _context: http://docs.python.org/library/contextlib.html
 
 
+Comparison with straight DB-API 2 code
+======================================
+
+Need a "Hello, World!" example? Here's how you'd set up a connection context,
+query a database table, and print out its contents with `dbkit`::
+
+    from dbkit import connect, query
+    from contextlib import closing
+    import sqlite3
+
+    with connect(sqlite3, 'counters.db') as ctx, closing(ctx):
+        for counter, value in query('SELECT counter, value FROM counters'):
+            print "%s: %d" % (counter, value)
+
+And here's how you'd so it with a DB-API 2 (using *just* :pep:`249`, no
+driver-specific extensions)::
+
+    import sqlite3
+    from contextlib import closing
+
+    with closing(sqlite3.connect('counters.db')) as conn:
+        with closing(conn.cursor()) as cur:
+            cur.execute('SELECT counter, value FROM counters')
+            while True:
+                row = cur.fetchone()
+                if row is None:
+                    break
+                print "%s: %d" % row
+
+
 Download
 ========
 
