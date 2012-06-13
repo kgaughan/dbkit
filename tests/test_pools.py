@@ -61,6 +61,13 @@ def test_contention():
             # managing the pool is waited on by this thread. Basically
             # nearly any pause should be long enough, though 1/100 of a
             # second seems like a reasonable balance.
+            # 
+            # We do this because we want to deterministically introduce a
+            # wait on the condition variable that signals when there's a free
+            # connection. In normal operation, this happens in a
+            # nondeterministic manner. This pause and the use of the release
+            # and spawn events ensure that the threads proceed in lockstep
+            # to produce the behaviour we need to set.
             threading.Timer(1.0/100, lambda: release.set()).start()
             with dbkit.transaction():
                 pass
