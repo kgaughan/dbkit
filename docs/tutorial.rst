@@ -10,13 +10,13 @@ A simple application
 Let's start with an 'hello, world' example. It's a small application for
 manipulating an SQLite database of counter. Here's the schema:
 
-.. literalinclude:: ../examples/schema.sql
+.. literalinclude:: ../examples/counters.sql
    :language: sql
 
 You'll find that file in the `examples` directory, and it's called
-`schema.sql`. Let's create the database::
+`counters.sql`. Let's create the database::
 
-    $ sqlite3 counters.sqlite < schema.sql
+    $ sqlite3 counters.sqlite < counters.sql
 
 You should now have the database set up.
 
