@@ -8,7 +8,6 @@ setup(
     version=dbkit.__version__,
     description='DB-API made easier',
     long_description=open('README').read(),
-    license=open('LICENSE').read(),
     url='https://github.com/kgaughan/dbkit/',
     py_modules=['dbkit'],
 
