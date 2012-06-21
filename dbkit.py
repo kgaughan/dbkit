@@ -89,8 +89,6 @@ class Context(object):
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
 
-    # Context stack management {{{
-
     def __enter__(self):
         self._push_context(self)
         return self
