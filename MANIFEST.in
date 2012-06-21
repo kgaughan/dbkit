@@ -1,1 +1,4 @@
 include LICENSE
+recursive-include docs *.rst Makefile *.py
+recursive-include tests *.py
+recursive-include examples *.py *.sql

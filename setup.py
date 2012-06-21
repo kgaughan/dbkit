@@ -9,6 +9,7 @@ setup(
     description='DB-API made easier',
     long_description=open('README').read(),
     url='https://github.com/kgaughan/dbkit/',
+    license='MIT',
     py_modules=['dbkit'],
 
     classifiers=[
@@ -22,7 +23,5 @@ setup(
     ],
 
     author=dbkit.__author__,
-    author_email=dbkit.__email__,
-    maintainer=dbkit.__author__,
-    maintainer_email=dbkit.__email__
+    author_email=dbkit.__email__
 )
