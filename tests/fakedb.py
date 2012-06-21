@@ -100,7 +100,6 @@ class Cursor(object):
         self.result = None
         return result
 
-# Exceptions {{{
 
 class Warning(StandardError):
     pass
@@ -140,5 +139,3 @@ class ProgrammingError(DatabaseError):
 
 class NotSupportedError(DatabaseError):
     pass
-
-# }}}

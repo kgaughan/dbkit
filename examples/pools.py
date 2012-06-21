@@ -1,7 +1,7 @@
 import web
 import psycopg2
 import pystache
-from dbkit import Pool, transaction, query, query_value, execute, dict_set
+from dbkit import Pool, transactional, query, query_value, execute, dict_set
 
 
 urls = (
@@ -28,12 +28,13 @@ TEMPLATE = """<!DOCTYPE html>
 </html>"""
 
 
+@transactional
 def save_name(name):
-    with transaction():
-        if query_value("SELECT n FROM greeted WHERE name = %s", (name,), 0) == 0:
-            execute("INSERT INTO greeted (name, n) VALUES (%s, 1)", (name,))
-        else:
-            execute("UPDATE greeted SET n = n + 1 WHERE name = %s", (name,))
+    if query_value("SELECT n FROM greeted WHERE name = %s", (name,), 0) == 0:
+        execute("INSERT INTO greeted (name, n) VALUES (%s, 1)", (name,))
+    else:
+        execute("UPDATE greeted SET n = n + 1 WHERE name = %s", (name,))
+
 
 def get_names():
     return query("SELECT name, n FROM greeted ORDER BY n", factory=dict_set)

@@ -67,7 +67,6 @@ class AbortTransaction(Exception):
     """
     __slots__ = ()
 
-# Contexts {{{
 
 class Context(object):
     """
@@ -126,8 +125,6 @@ class Context(object):
         if with_exception and current is None:
             raise NoContext()
         return current
-
-    # }}}
 
     @contextlib.contextmanager
     def transaction(self):
@@ -200,9 +197,6 @@ class Context(object):
         finally:
             self._mdr = None
 
-# }}}
-
-# Connection access mediation {{{
 
 # pylint: disable-msg=R0903
 class ConnectionMediatorBase(object):
@@ -264,7 +258,7 @@ class SingleConnectionMediator(ConnectionMediatorBase):
             # pylint: disable-msg=W0702
             try:
                 self.conn.close()
-            except: # pragma: no cover
+            except:  # pragma: no cover
                 pass
             self.conn = None
 
@@ -308,9 +302,6 @@ class PooledConnectionMediator(ConnectionMediatorBase):
         # release a connection.
         pass
 
-# }}}
-
-# Pools {{{
 
 # pylint: disable-msg=R0922
 class PoolBase(object):
@@ -435,12 +426,11 @@ class Pool(PoolBase):
             try:
                 self._allocated -= 1
                 conn.close()
-            except: # pragma: no cover
+            except:  # pragma: no cover
                 pass
         self._pool.clear()
         self._cond.release()
 
-# }}}
 
 def _make_connect(module, args, kwargs):
     """
@@ -450,6 +440,7 @@ def _make_connect(module, args, kwargs):
     # pylint: disable-msg=W0142
     return functools.partial(module.connect, *args, **kwargs)
 
+
 def connect(module, *args, **kwargs):
     """
     Connect to a database using the given DB-API driver module. Returns
@@ -457,15 +448,16 @@ def connect(module, *args, **kwargs):
     keyword arguments are passed the module's :py:func:`connect` function.
     """
     mdr = SingleConnectionMediator(
-            module,
-            _make_connect(module, args, kwargs))
+        module, _make_connect(module, args, kwargs))
     return Context(module, mdr)
+
 
 def context():
     """
     Returns the current database context.
     """
     return Context.current()
+
 
 def transaction():
     """
@@ -502,6 +494,7 @@ def transaction():
                     (new_owner_id, page_id))
     """
     return Context.current().transaction()
+
 
 def transactional(wrapped):
     """
@@ -544,13 +537,13 @@ def transactional(wrapped):
             return wrapped(*args, **kwargs)
     return functools.update_wrapper(wrapper, wrapped)
 
-# SQL statement support {{{
 
 def execute(stmt, args=()):
     """
     Execute an SQL statement.
     """
     Context.current().execute(stmt, args).close()
+
 
 def query(stmt, args=(), factory=None):
     """
@@ -560,6 +553,7 @@ def query(stmt, args=(), factory=None):
     factory = ctx.default_factory if factory is None else factory
     return factory(ctx.execute(stmt, args))
 
+
 def query_row(stmt, args=(), factory=None):
     """
     Execute a query. Returns the first row of the result set, or `None`
@@ -567,6 +561,7 @@ def query_row(stmt, args=(), factory=None):
     for row in query(stmt, args, factory):
         return row
     return None
+
 
 def query_value(stmt, args=(), default=None):
     """
@@ -578,21 +573,20 @@ def query_value(stmt, args=(), default=None):
         return row[0]
     return default
 
+
 def query_column(stmt, args=()):
     """
     Execute a query, returning an iterable of the first column.
     """
     return query(stmt, args, column_set)
 
-# }}}
-
-# Stored procedure support {{{
 
 def execute_proc(procname, args=()):
     """
     Execute a stored procedure.
     """
     Context.current().execute_proc(procname, args).close()
+
 
 def query_proc(procname, args=(), factory=None):
     """
@@ -602,6 +596,7 @@ def query_proc(procname, args=(), factory=None):
     factory = ctx.default_factory if factory is None else factory
     return factory(ctx.execute_proc(procname, args))
 
+
 def query_proc_row(procname, args=(), factory=None):
     """
     Execute a stored procedure. Returns the first row of the result set,
@@ -610,6 +605,7 @@ def query_proc_row(procname, args=(), factory=None):
     for row in query_proc(procname, args, factory):
         return row
     return None
+
 
 def query_proc_value(procname, args=(), default=None):
     """
@@ -621,15 +617,13 @@ def query_proc_value(procname, args=(), default=None):
         return row[0]
     return default
 
+
 def query_proc_column(procname, args=()):
     """
     Execute a stored procedure, returning an iterable of the first column.
     """
     return query_proc(procname, args, column_set)
 
-# }}}
-
-# Result generators {{{
 
 def dict_set(cursor):
     """
@@ -645,6 +639,7 @@ def dict_set(cursor):
     finally:
         cursor.close()
 
+
 def tuple_set(cursor):
     """
     Iterator over a statement's results where each row is a tuple.
@@ -657,6 +652,7 @@ def tuple_set(cursor):
             yield row
     finally:
         cursor.close()
+
 
 def column_set(cursor):
     """
@@ -671,9 +667,6 @@ def column_set(cursor):
     finally:
         cursor.close()
 
-# }}}
-
-# Utility functions {{{
 
 def unindent_statement(stmt):
     """
@@ -691,15 +684,13 @@ def unindent_statement(stmt):
             break
     return "\n".join(line[prefix:] for line in lines)
 
-# }}}
-
-# Logging support {{{
 
 def null_logger(_stmt, _args):
     """
     A logger that discards everything sent to it.
     """
     pass
+
 
 def make_file_object_logger(fh):
     """
@@ -716,9 +707,8 @@ def make_file_object_logger(fh):
         pprint.pprint(args, fh)
     return logger
 
+
 # pylint:disable-msg=C0103
 stderr_logger = make_file_object_logger(sys.stderr)
-
-# }}}
 
 # vim:set et ai:

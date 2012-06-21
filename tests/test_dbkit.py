@@ -34,6 +34,7 @@ UPDATE_COUNTER = """
 UPDATE counters SET value = ? WHERE counter = ?
 """
 
+
 def setup():
     """Creates a context fit for testing."""
     with dbkit.connect(sqlite3, ':memory:') as ctx:
@@ -42,10 +43,12 @@ def setup():
             dbkit.execute(TEST_DATA)
     return ctx
 
+
 def test_good_connect():
     ctx = dbkit.connect(sqlite3, ':memory:')
     assert isinstance(ctx, dbkit.Context)
     ctx.close()
+
 
 def test_bad_connect():
     try:
@@ -56,6 +59,7 @@ def test_bad_connect():
         assert False, "Should not have been able to open database."
     except sqlite3.OperationalError:
         pass
+
 
 def test_context():
     assert dbkit.Context.current(with_exception=False) is None
@@ -81,6 +85,7 @@ def test_context():
     assert ctx.logger is None
     assert len(ctx.state.stack) == 0
 
+
 def test_create_table():
     with dbkit.connect(sqlite3, ':memory:'):
         result = dbkit.query_column(LIST_TABLES)
@@ -91,6 +96,7 @@ def test_create_table():
         assert isinstance(result, types.GeneratorType)
         assert list(result) == [u'counters']
 
+
 def test_bad_drop_table():
     with setup() as ctx:
         try:
@@ -98,6 +104,7 @@ def test_bad_drop_table():
             assert False, "Should have triggered an exception."
         except ctx.OperationalError:
             pass
+
 
 def test_transaction():
     with dbkit.connect(sqlite3, ':memory:'):
@@ -125,6 +132,7 @@ def test_transaction():
         value = dbkit.query_value(GET_COUNTER, ('foo',))
         assert value == 42
 
+
 def test_transaction_decorator():
     @dbkit.transactional
     def update_counter_and_fail(name, value):
@@ -140,6 +148,7 @@ def test_transaction_decorator():
         assert exception_caught
         value = dbkit.query_value(GET_COUNTER, ('foo',))
         assert value == 42
+
 
 def test_factory():
     with setup() as ctx:
@@ -157,6 +166,7 @@ def test_factory():
             SELECT counter, value FROM counters WHERE counter = ?
             """, ('bar',))
         assert row is None
+
 
 def test_unpooled_disconnect():
     ctx = setup()
@@ -189,12 +199,14 @@ def test_unpooled_disconnect():
 
     ctx.close()
 
+
 def test_unindent_statement():
     assert dbkit.unindent_statement("foo\nbar") == "foo\nbar"
     assert dbkit.unindent_statement(" foo\n bar") == "foo\nbar"
     assert dbkit.unindent_statement("  foo\n  bar") == "foo\nbar"
     assert dbkit.unindent_statement(" foo\n  bar") == "foo\n bar"
     assert dbkit.unindent_statement("  foo\n bar") == "foo\nar"
+
 
 def test_make_file_object_logger():
     captured = StringIO.StringIO()
@@ -206,6 +218,7 @@ def test_make_file_object_logger():
     captured.close()
     assert value == "STATEMENT\nArguments:\n(23, 42)\n"
 
+
 def test_logging():
     with dbkit.connect(sqlite3, ':memory:') as ctx:
         captured = StringIO.StringIO()
@@ -214,6 +227,7 @@ def test_logging():
     value = utils.skip_first_line(captured.getvalue())
     captured.close()
     assert value == "%s\nArguments:\n()\n" % (LIST_TABLES,)
+
 
 def test_procs():
     with dbkit.connect(fakedb, 'db') as ctx:
@@ -224,9 +238,9 @@ def test_procs():
         conn = ctx._mdr.conn
     assert conn.executed == 4
     assert conn.session == [
-            'cursor', 'proc:execute_proc', 'cursor-close',
-            'cursor', 'proc:query_proc_row', 'cursor-close',
-            'cursor', 'proc:query_proc_value', 'cursor-close',
-            'cursor', 'proc:query_proc_column', 'cursor-close']
+        'cursor', 'proc:execute_proc', 'cursor-close',
+        'cursor', 'proc:query_proc_row', 'cursor-close',
+        'cursor', 'proc:query_proc_value', 'cursor-close',
+        'cursor', 'proc:query_proc_column', 'cursor-close']
 
 # vim:set et ai:
