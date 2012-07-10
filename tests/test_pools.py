@@ -86,3 +86,27 @@ def test_finalise():
     POOL.finalise()
     assert POOL._allocated == 0
     assert len(POOL._pool) == 0
+
+
+def test_setting_propagation():
+    pool = dbkit.Pool(fakedb, 1, fakedb.INVALID_CURSOR)
+    try:
+        assert pool.default_factory is dbkit.tuple_set
+        assert pool.logger is dbkit.null_logger
+        with pool.connect() as ctx:
+            assert ctx.default_factory is dbkit.tuple_set
+            assert ctx.logger is dbkit.null_logger
+    finally:
+        pool.finalise()
+
+    pool = dbkit.Pool(fakedb, 1, fakedb.INVALID_CURSOR)
+    try:
+        assert pool.default_factory is dbkit.tuple_set
+        assert pool.logger is dbkit.null_logger
+        pool.default_factory = None
+        pool.logger = None
+        with pool.connect() as ctx:
+            assert ctx.default_factory is None
+            assert ctx.logger is None
+    finally:
+        pool.finalise()

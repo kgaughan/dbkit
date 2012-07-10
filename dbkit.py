@@ -28,7 +28,7 @@ __all__ = (
     'unindent_statement', 'make_file_object_logger',
     'null_logger', 'stderr_logger')
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'Keith Gaughan'
 __email__ = 'k@stereochro.me'
 
@@ -307,11 +307,13 @@ class PoolBase(object):
     Abstract base class for all connection pools.
     """
 
-    __slots__ = ('module',) + _EXCEPTIONS
+    __slots__ = ('module', 'logger', 'default_factory') + _EXCEPTIONS
 
     def __init__(self, module):
         super(PoolBase, self).__init__()
         self.module = module
+        self.logger = null_logger
+        self.default_factory = tuple_set
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
 
@@ -353,7 +355,10 @@ class PoolBase(object):
         """
         Returns a context that uses this pool as a connection source.
         """
-        return Context(self.module, PooledConnectionMediator(self))
+        ctx = Context(self.module, PooledConnectionMediator(self))
+        ctx.logger = self.logger
+        ctx.default_factory = self.default_factory
+        return ctx
 
 
 class Pool(PoolBase):
