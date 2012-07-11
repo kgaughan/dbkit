@@ -69,13 +69,38 @@ class AbortTransaction(Exception):
     __slots__ = ()
 
 
+class _ContextStack(threading.local):
+    """
+    The context stack for the current thread.
+    """
+
+    def __init__(self):
+        super(_ContextStack, self).__init__()
+        self.stack = []
+
+    def push(self, ctx):
+        """Push a context on top of this stack."""
+        self.stack.append(ctx)
+
+    def pop(self):
+        """Push a context from the top of this stack."""
+        self.stack.pop()
+
+    def top(self):
+        """Return the topmost element in this stack."""
+        return self.stack[-1] if len(self.stack) > 0 else None
+
+    def __len__(self):
+        return len(self.stack)
+
+
 class Context(object):
     """
     A database connection context.
     """
 
     __slots__ = ('_mdr', '_depth', 'logger', 'default_factory') + _EXCEPTIONS
-    state = threading.local()
+    stack = _ContextStack()
 
     def __init__(self, module, mdr):
         """
@@ -91,39 +116,20 @@ class Context(object):
             setattr(self, exc, getattr(module, exc))
 
     def __enter__(self):
-        self._push_context(self)
+        self.stack.push(self)
         return self
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
-        self._pop_context()
-
-    @classmethod
-    def _push_context(cls, ctx):
-        """Push a context onto the context stack."""
-        cls.state.__dict__.setdefault('stack', [])
-        cls.state.stack.append(ctx)
-        cls.state.current = ctx
-
-    @classmethod
-    def _pop_context(cls):
-        """Pop the topmost context from the context stack."""
-        if cls.current(with_exception=False) is not None:
-            stack = cls.state.stack
-            stack.pop()
-            if len(stack) == 0:
-                cls.state.current = None
-            else:
-                cls.state.current = stack[len(stack) - 1]
+        self.stack.pop()
 
     @classmethod
     def current(cls, with_exception=True):
         """
         Returns the current database context.
         """
-        current = cls.state.__dict__.setdefault('current', None)
-        if with_exception and current is None:
+        if with_exception and len(cls.stack) == 0:
             raise NoContext()
-        return current
+        return cls.stack.top()
 
     @contextlib.contextmanager
     def transaction(self):

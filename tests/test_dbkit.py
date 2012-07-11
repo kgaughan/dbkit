@@ -67,10 +67,10 @@ def test_context():
 
     with ctx:
         # Check nesting.
-        assert len(ctx.state.stack) == 1
+        assert len(ctx.stack) == 1
         with ctx:
-            assert len(ctx.state.stack) == 2
-        assert len(ctx.state.stack) == 1
+            assert len(ctx.stack) == 2
+        assert len(ctx.stack) == 1
 
         assert dbkit.Context.current(with_exception=False) is ctx
         assert ctx._mdr is not None
@@ -83,7 +83,7 @@ def test_context():
         pass
     assert ctx._mdr is None
     assert ctx.logger is None
-    assert len(ctx.state.stack) == 0
+    assert len(ctx.stack) == 0
 
 
 def test_create_table():
