@@ -546,6 +546,20 @@ def connect(module, *args, **kwargs):
     return Context(module, mdr)
 
 
+def create_pool(module, max_conns, *args, **kwargs):
+    """
+    Create a connection pool appropriate to the driver module's capabilities.
+    """
+    try:
+        if module.threadsafety > 1:
+            return Pool(module, max_conns, *args, **kwargs)
+        if module.threadsafety > 0:
+            return ThreadAffinePool(module, max_conns, *args, **kwargs)
+        raise NotSupported("Pool requires a threadsafe driver.")
+    except AttributeError:
+        raise NotSupported("Cannot determine driver threadsafety.")
+
+
 def context():
     """
     Returns the current database context.
