@@ -15,6 +15,7 @@ import functools
 import pprint
 import sys
 import threading
+import weakref
 
 
 __all__ = (
@@ -375,7 +376,7 @@ class Pool(PoolBase):
         try:
             if module.threadsafety not in (2, 3):
                 raise NotSupported(
-                    "Connection pooling requires a threadsafe driver.")
+                    "Pool requires a driver with threadsafe connections.")
         except AttributeError:
             raise NotSupported("Cannot determine driver threadsafety.")
         super(Pool, self).__init__(module)
@@ -432,6 +433,91 @@ class Pool(PoolBase):
             except:  # pragma: no cover
                 pass
         self._pool.clear()
+        self._cond.release()
+
+
+class ThreadAffinePool(PoolBase):
+    """
+    A 'pool' that allows a maximum of one connection per thread.
+
+    Here's the science:
+
+     * The pool has a threadlocal object that contains a weak reference to the
+       connnection it manages.
+     * A counter of the number of connections open. This is decremented as the
+       weak reference to each connection disappears.
+     * A condition variable that protects the counter.
+    """
+
+    __slots__ = (
+        '_cond', '_starved',
+        '_max_conns', '_allocated',
+        '_connect')
+
+    def __init__(self, module, max_conns, *args, **kwargs):
+        try:
+            if module.threadsafety < 1:
+                raise NotSupported("Pool requires a threadsafe driver.")
+        except AttributeError:
+            raise NotSupported("Cannot determine driver threadsafety.")
+        super(ThreadAffinePool, self).__init__(module)
+        self._cond = threading.Condition()
+        self._starved = threading.Event()
+        self._max_conns = max_conns
+        self._allocated = 0
+        self._local = threading.local()
+        self._connect = _make_connect(module, args, kwargs)
+
+    def acquire(self):
+        # Attempt to acquire a strong reference to this thread's connection.
+        self._local.__dict__.setdefault('conn_ref', None)
+        conn_ref = self._local.conn_ref
+        conn = None if conn_ref is None else conn_ref()
+        if conn is not None:
+            return conn
+
+        # Attempt to acquire a fresh connection.
+        self._cond.acquire()
+        try:
+            while True:
+                if self._allocated < self._max_conns:
+                    conn = self._connect()
+                    self._local.conn_ref = weakref.ref(conn, self.discard)
+                    self._allocated += 1
+                    return conn
+                # Signal that there is at least one thread that needs a
+                # connection. The next thread release its connection
+                # should thus release it completely.
+                self._starved.set()
+                self._cond.wait()
+        finally:
+            self._cond.release()
+
+    def release(self, conn):
+        self._cond.acquire()
+        if self._starved.isSet():
+            # pylint: disable-msg=W0702
+            try:
+                conn.close()
+            except:  # pragma: no cover
+                pass
+            self._local.conn_ref = None
+            self._allocated -= 1
+            self._starved.clear()
+            self._cond.notify()
+        self._cond.release()
+
+    def discard(self):
+        self._cond.acquire()
+        self._allocated -= 1
+        self._cond.release()
+
+    def finalise(self):
+        self._cond.acquire()
+        # Wait until all the threads using this pool return their connections.
+        while self._allocated > 0:
+            self._starved.set()
+            self._cond.wait()
         self._cond.release()
 
 
