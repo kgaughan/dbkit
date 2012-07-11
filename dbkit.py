@@ -513,6 +513,8 @@ class ThreadAffinePool(PoolBase):
     def discard(self):
         self._cond.acquire()
         self._allocated -= 1
+        self._starved.clear()
+        self._cond.notify()
         self._cond.release()
 
     def finalise(self):
