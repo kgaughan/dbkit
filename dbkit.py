@@ -438,16 +438,19 @@ class Pool(PoolBase):
 
 class ThreadAffinePool(PoolBase):
     """
-    A 'pool' that allows a maximum of one connection per thread.
-
-    Here's the science:
-
-     * The pool has a threadlocal object that contains a weak reference to the
-       connnection it manages.
-     * A counter of the number of connections open. This is decremented as the
-       weak reference to each connection disappears.
-     * A condition variable that protects the counter.
+    A connection pool that allows a maximum of one connection per thread and
+    that connection has strict affinity with its thread. This is needed to
+    allow type 1 (thread safe module, thread unsafe connections) drivers to
+    be pooled (after a fashion).
     """
+
+    # An open question is how this is designed is whether it's wise associate
+    # the connection with the thread by way of a weak reference. The reason I
+    # did it this way was to help avoid starvation scenarios where a thread
+    # might not be using a connection for an extended period, thus blocking
+    # other threads from connecting to the database. If if the garbage
+    # collector kicks in while the starved threads are waiting, this means
+    # they'll have a chance to grab a connection.
 
     __slots__ = (
         '_cond', '_starved',
