@@ -291,13 +291,20 @@ class PooledConnectionMediator(ConnectionMediatorBase):
 class PoolBase(object):
     """Abstract base class for all connection pools."""
 
-    __slots__ = ('module', 'logger', 'default_factory') + _EXCEPTIONS
+    __slots__ = _EXCEPTIONS + (
+        'module', 'logger', 'default_factory',
+        '_connect')
 
-    def __init__(self, module):
+    def __init__(self, module, threadsafety, args, kwargs):
+        if not hasattr(module, 'threadsafety'):
+            raise NotSupported("Cannot determine driver threadsafety.")
+        if module.threadsafety < threadsafety:
+            raise NotSupported("Driver is not sufficiently threadsafe.")
         super(PoolBase, self).__init__()
         self.module = module
         self.logger = null_logger
         self.default_factory = tuple_set
+        self._connect = _make_connect(module, args, kwargs)
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
 
@@ -346,21 +353,14 @@ class PoolBase(object):
 class Pool(PoolBase):
     """A very simple connection pool."""
 
-    __slots__ = ('_pool', '_cond', '_max_conns', '_allocated', '_connect')
+    __slots__ = ('_pool', '_cond', '_max_conns', '_allocated')
 
     def __init__(self, module, max_conns, *args, **kwargs):
-        try:
-            if module.threadsafety not in (2, 3):
-                raise NotSupported(
-                    "Pool requires a driver with threadsafe connections.")
-        except AttributeError:
-            raise NotSupported("Cannot determine driver threadsafety.")
-        super(Pool, self).__init__(module)
+        super(Pool, self).__init__(module, 2, args, kwargs)
         self._pool = collections.deque()
         self._cond = threading.Condition()
         self._max_conns = max_conns
         self._allocated = 0
-        self._connect = _make_connect(module, args, kwargs)
 
     def acquire(self):
         self._cond.acquire()
@@ -428,24 +428,15 @@ class ThreadAffinePool(PoolBase):
     # collector kicks in while the starved threads are waiting, this means
     # they'll have a chance to grab a connection.
 
-    __slots__ = (
-        '_cond', '_starved', '_local',
-        '_max_conns', '_allocated',
-        '_connect')
+    __slots__ = ('_cond', '_starved', '_local', '_max_conns', '_allocated')
 
     def __init__(self, module, max_conns, *args, **kwargs):
-        try:
-            if module.threadsafety < 1:
-                raise NotSupported("Pool requires a threadsafe driver.")
-        except AttributeError:
-            raise NotSupported("Cannot determine driver threadsafety.")
-        super(ThreadAffinePool, self).__init__(module)
+        super(ThreadAffinePool, self).__init__(module, 1, args, kwargs)
         self._cond = threading.Condition()
         self._starved = threading.Event()
         self._max_conns = max_conns
         self._allocated = 0
         self._local = threading.local()
-        self._connect = _make_connect(module, args, kwargs)
 
     def acquire(self):
         # Attempt to acquire a strong reference to this thread's connection.
