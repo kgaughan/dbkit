@@ -15,7 +15,6 @@ import functools
 import pprint
 import sys
 import threading
-import weakref
 
 
 __all__ = (
@@ -420,14 +419,6 @@ class ThreadAffinePool(PoolBase):
     be pooled (after a fashion).
     """
 
-    # An open question is how this is designed is whether it's wise associate
-    # the connection with the thread by way of a weak reference. The reason I
-    # did it this way was to help avoid starvation scenarios where a thread
-    # might not be using a connection for an extended period, thus blocking
-    # other threads from connecting to the database. If if the garbage
-    # collector kicks in while the starved threads are waiting, this means
-    # they'll have a chance to grab a connection.
-
     __slots__ = ('_cond', '_starved', '_local', '_max_conns', '_allocated')
 
     def __init__(self, module, max_conns, *args, **kwargs):
@@ -439,10 +430,7 @@ class ThreadAffinePool(PoolBase):
         self._local = threading.local()
 
     def acquire(self):
-        # Attempt to acquire a strong reference to this thread's connection.
-        self._local.__dict__.setdefault('conn_ref', None)
-        conn_ref = self._local.conn_ref
-        conn = None if conn_ref is None else conn_ref()
+        conn = self._local.__dict__.get('conn', None)
         if conn is not None:
             return conn
 
@@ -452,7 +440,7 @@ class ThreadAffinePool(PoolBase):
             while True:
                 if self._allocated < self._max_conns:
                     conn = self._connect()
-                    self._local.conn_ref = weakref.ref(conn, self.discard)
+                    self._local.conn = conn
                     self._allocated += 1
                     return conn
                 # Signal that there is at least one thread that needs a
@@ -471,7 +459,7 @@ class ThreadAffinePool(PoolBase):
                 conn.close()
             except:  # pragma: no cover
                 pass
-            self._local.conn_ref = None
+            self._local.conn = None
             self._allocated -= 1
             self._starved.clear()
             self._cond.notify()
@@ -479,6 +467,7 @@ class ThreadAffinePool(PoolBase):
 
     def discard(self):
         self._cond.acquire()
+        self._local.conn = None
         self._allocated -= 1
         self._starved.clear()
         self._cond.notify()
