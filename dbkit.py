@@ -548,11 +548,14 @@ def create_pool(module, max_conns, *args, **kwargs):
     """
     if not hasattr(module, 'threadsafety'):
         raise NotSupported("Cannot determine driver threadsafety.")
+    if max_conns < 1:
+        raise ValueError("Minimum number of connections is 1.")
     if module.threadsafety > 1:
         return Pool(module, max_conns, *args, **kwargs)
     if module.threadsafety > 0:
         return ThreadAffinePool(module, max_conns, *args, **kwargs)
-    raise NotSupported("Pool requires a threadsafe driver.")
+    if module.threadsafety == 0:
+        return DummyPool(module, 1, *args, **kwargs)
 
 
 def context():
