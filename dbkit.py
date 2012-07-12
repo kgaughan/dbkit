@@ -428,7 +428,10 @@ class ThreadAffinePool(PoolBase):
     # collector kicks in while the starved threads are waiting, this means
     # they'll have a chance to grab a connection.
 
-    __slots__ = ('_cond', '_starved', '_max_conns', '_allocated', '_connect')
+    __slots__ = (
+        '_cond', '_starved', '_local',
+        '_max_conns', '_allocated',
+        '_connect')
 
     def __init__(self, module, max_conns, *args, **kwargs):
         try:
