@@ -326,7 +326,7 @@ class PoolBase(object):
 
     def discard(self):
         """
-        Signal to the pool that a connect has been discarded.
+        Signal to the pool that a connection has been discarded.
 
         This is intended for internal use only.
         """
