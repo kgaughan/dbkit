@@ -482,6 +482,46 @@ class ThreadAffinePool(PoolBase):
         self._cond.release()
 
 
+class DummyPool(Pool):
+    """
+    This pool only imposes limits on the number of connections that can be
+    held open concurrently. Connections are closed as soon as the context
+    they are being used in is exited.
+
+    Type 0 drivers force `max_conns` to be set to 1. Other driver types allow
+    more than one concurrent connection.
+    """
+
+    __slots = ('_semaphore',)
+
+    def __init__(self, module, max_conns, *args, **kwargs):
+        threadsafety = 0 if max_conns == 1 else 1
+        super(DummyPool, self).__init__(module, threadsafety, args, kwargs)
+        self._semaphore = threading.Semaphore(max_conns)
+
+    def acquire(self):
+        self._semaphore.acquire()
+        try:
+            return self._connect()
+        except:
+            self._semaphore.release()
+            raise
+
+    def release(self, conn):
+        # pylint: disable-msg=W0702
+        try:
+            conn.close()
+        except:  # pragma: no cover
+            pass
+        self._semaphore.release()
+
+    def discard(self):
+        self._semaphore.release()
+
+    def finalise(self):
+        pass
+
+
 def _make_connect(module, args, kwargs):
     """
     Returns a function capable of making connections with a particular
