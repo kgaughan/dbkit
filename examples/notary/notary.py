@@ -42,7 +42,7 @@ def get_last_row_id():
 
 def get_projects():
     return dbkit.query("""
-        SELECT    project_id, project, COUNT(note_id) AS notes
+        SELECT    slug, project, COUNT(note_id) AS notes
         FROM      projects
         LEFT JOIN notes USING (project_id)
         GROUP BY  project_id
@@ -52,16 +52,20 @@ def get_projects():
 
 @dbkit.transactional
 def add_project(project):
+    slug = slugify(project)
     dbkit.execute("""
-        INSERT INTO projects (project) VALUES (?)
-        """, (project,))
-    return get_last_row_id()
+        INSERT INTO projects (project, slug) VALUES (?, ?)
+        """, (project, slug))
+    return (get_last_row_id(), slug)
 
 
-def get_recent_entries():
+def get_notes(project_id):
     return dbkit.query("""
-        SELECT note_id, note, created FROM notes ORDER BY created DESC
-        """)
+        SELECT   note_id, note, created
+        FROM     notes
+        WHERE    project_id = ?
+        ORDER BY created DESC
+        """, (project_id,))
 
 
 @dbkit.transactional
@@ -77,13 +81,15 @@ class Frontpage(object):
     def GET(self):
         with pool.connect():
             projects = get_projects()
-        return render.layout(render.frontpage(projects=list(projects)))
+        return render.layout(
+            render.frontpage(projects=list(projects)),
+            "Projects")
 
     def POST(self):
         form = web.input(project='')
         with pool.connect():
-            add_project(form.project)
-        raise web.seeother(web.ctx.path)
+            _, slug = add_project(form.project)
+        raise web.seeother(slug + '/')
 
 
 if __name__ == '__main__':
