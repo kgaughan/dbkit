@@ -27,16 +27,22 @@ RECENT_ENTRIES = """<!DOCTYPE html>
     </head>
     <body>
         <h1>Recent entries</h1>
-        {{#entries?}}
-        <ul>
+
+        {{#has_entries}}<ul>{{/has_entries}}
         {{#entries}}
         <li>{{note}}</li>
         {{/entries}}
         </ul>
-        {{/entries?}}
-        {{^entries?}}
+        {{#has_entries}}</ul>{{/has_entries}}
+
+        {{^entries}}
         <p><em>No entries!</em></p>
-        {{/entries?}}
+        {{/entries}}
+
+        <form action="" method="post">
+        <div><textarea name="note"></textarea></div>
+        <div><input type="submit" value="Post"></div>
+        </form>
     </body>
 </html>"""
 
@@ -46,11 +52,25 @@ def get_recent_entries():
         "SELECT id, note, created FROM notes ORDER BY created DESC")
 
 
+@dbkit.transactional
+def save_entry(note):
+    dbkit.execute("INSERT INTO notes (note) VALUES (?)", (note,))
+
+
 class most_recent(object):
+
     def GET(self):
         with pool.connect():
-            recent_entries = get_recent_entries()
-        return pystache.render(RECENT_ENTRIES, {'entries': recent_entries})
+            recent_entries = list(get_recent_entries())
+        return pystache.render(RECENT_ENTRIES, {
+            'entries': recent_entries,
+            'has_entries': len(recent_entries) > 0})
+
+    def POST(self):
+        with pool.connect():
+            form = web.input(note='')
+            save_entry(form.note)
+        raise web.seeother(web.ctx.path)
 
 
 if __name__ == '__main__':
