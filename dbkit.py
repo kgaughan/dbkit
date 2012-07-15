@@ -727,7 +727,7 @@ def dict_set(cursor):
             row = cursor.fetchone()
             if row is None:
                 break
-            yield dict(zip(columns, row))
+            yield AttrDict(zip(columns, row))
     finally:
         cursor.close()
 
@@ -754,6 +754,30 @@ def column_set(cursor):
             yield row[0]
     finally:
         cursor.close()
+
+
+class AttrDict(dict):
+    """A dict whose elements may be accessed like object attributes."""
+
+    __slots__ = ()
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError, exc:
+            raise AttributeError, exc
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __delattr__(self, key):
+        try:
+            del self[key]
+        except KeyError, exc:
+            raise AttributeError, exc
+
+    def __repr__(self):
+        return '<AttrDict ' + dict.__repr__(self) + '>'
 
 
 def unindent_statement(stmt):
