@@ -1,11 +1,15 @@
-$def with (content, title='Notary')
+$def with (content)
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>$title</title>
+		$if content.title:
+			<title>$content.title</title>
+		$else:
+			<title>Notary</title>
 		<link rel="stylesheet" type="text/css" media="all" href="/static/style.css">
 	</head>
 	<body>
+		<h1>$content.title</h1>
 		$:content
 	</body>
 </html>

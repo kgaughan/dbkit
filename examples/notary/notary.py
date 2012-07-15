@@ -18,7 +18,7 @@ urls = (
 )
 
 app = web.application(urls, globals())
-render = web.template.render('templates')
+render = web.template.render('templates', base='layout')
 pool = dbkit.create_pool(sqlite3, 10, "notary.db")
 pool.default_factory = dbkit.dict_set
 
@@ -89,9 +89,7 @@ class Frontpage(object):
     def GET(self):
         with pool.connect():
             projects = get_projects()
-        return render.layout(
-            render.frontpage(projects=list(projects)),
-            "Projects")
+        return render.frontpage(projects=list(projects))
 
     def POST(self):
         form = web.input(project='')
@@ -108,9 +106,7 @@ class Project(object):
             if not project:
                 raise web.notfound("No such project.")
             notes = get_notes(project.project_id)
-        return render.layout(
-            render.project(project=project, notes=list(notes)),
-            "Project: " + project.project)
+        return render.project(project=project, notes=list(notes))
 
     def POST(self, slug):
         form = web.input(note='')
