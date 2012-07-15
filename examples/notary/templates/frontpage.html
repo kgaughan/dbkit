@@ -1,0 +1,15 @@
+$def with (projects)
+<h1>Projects</h1>
+
+$if projects:
+	<ul>
+	$for project in projects:
+		<li><a href="$project['project_id']/">$project['project']</a></li>
+	</ul>
+$else:
+	<p><em>No projects!</em></p>
+
+<form action="" method="post">
+	<div><label>Project: <input type="text" name="project"></label></div>
+	<div><input type="submit" value="Add project"></div>
+</form>

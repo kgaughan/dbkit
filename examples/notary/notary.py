@@ -11,7 +11,8 @@ import dbkit
 
 
 urls = (
-    '/', 'most_recent'
+    '/', 'frontpage',
+    '/([-a-z0-9]+)/', 'project',
 )
 
 app = web.application(urls, globals())
@@ -20,9 +21,27 @@ pool = dbkit.create_pool(sqlite3, 10, "notary.db")
 pool.default_factory = dbkit.dict_set
 
 
+def get_last_row_id():
+    return dbkit.query_value("SELECT LAST_INSERT_ROWID()")
+
+
+def get_projects():
+    return dbkit.query("""
+        SELECT project_id, project FROM projects ORDER BY project
+        """)
+
+
+@dbkit.transactional
+def add_project(project):
+    dbkit.execute("""
+        INSERT INTO projects (project) VALUES (?)
+        """, (project,))
+    return get_last_row_id()
+
+
 def get_recent_entries():
     return dbkit.query("""
-        SELECT id, note, created FROM notes ORDER BY created DESC
+        SELECT note_id, note, created FROM notes ORDER BY created DESC
         """)
 
 
@@ -31,20 +50,20 @@ def save_entry(note):
     dbkit.execute("""
         INSERT INTO notes (note) VALUES (?)
         """, (note,))
+    return get_last_row_id()
 
 
-class most_recent(object):
+class frontpage(object):
 
     def GET(self):
         with pool.connect():
-            recent_entries = list(get_recent_entries())
-        return render.layout(
-            render.recent_entries(entries=list(recent_entries)))
+            projects = get_projects()
+        return render.layout(render.frontpage(projects=list(projects)))
 
     def POST(self):
+        form = web.input(project='')
         with pool.connect():
-            form = web.input(note='')
-            save_entry(form.note)
+            add_project(form.project)
         raise web.seeother(web.ctx.path)
 
 
