@@ -1,7 +1,10 @@
 CREATE TABLE projects (
 	project_id INTEGER NOT NULL PRIMARY KEY,
+	slug       TEXT    NOT NULL,
 	project    TEXT    NOT NULL
 );
+
+CREATE UNIQUE INDEX ux_project_slug ON projects (slug);
 
 CREATE TABLE notes (
 	note_id    INTEGER  NOT NULL PRIMARY KEY,
