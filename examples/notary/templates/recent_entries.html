@@ -4,8 +4,8 @@ $def with (entries)
 $if entries:
 	<ul>
 	$for entry in entries:
-		<li>$entry['note']
-		<a href="#p$entry['id']" name="p$entry['id']" class="pnum">&para;</a>
+		<li>$entry.note
+		<a href="#p$entry.id" name="p$entry.id" class="pnum">&para;</a>
 		</li>
 	</ul>
 $else:
