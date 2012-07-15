@@ -21,13 +21,16 @@ pool.default_factory = dbkit.dict_set
 
 
 def get_recent_entries():
-    return dbkit.query(
-        "SELECT id, note, created FROM notes ORDER BY created DESC")
+    return dbkit.query("""
+        SELECT id, note, created FROM notes ORDER BY created DESC
+        """)
 
 
 @dbkit.transactional
 def save_entry(note):
-    dbkit.execute("INSERT INTO notes (note) VALUES (?)", (note,))
+    dbkit.execute("""
+        INSERT INTO notes (note) VALUES (?)
+        """, (note,))
 
 
 class most_recent(object):
