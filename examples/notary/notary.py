@@ -8,11 +8,13 @@ database driver support for connection pooling.
 import web
 import sqlite3
 import dbkit
+import unicodedata
+import re
 
 
 urls = (
-    '/', 'frontpage',
-    '/([-a-z0-9]+)/', 'project',
+    '/', 'Frontpage',
+    '/([-a-z0-9]+)/', 'Project',
 )
 
 app = web.application(urls, globals())
@@ -21,7 +23,20 @@ pool = dbkit.create_pool(sqlite3, 10, "notary.db")
 pool.default_factory = dbkit.dict_set
 
 
+def strip_accents(s):
+    """Strip accents to prepare for slugification."""
+    nfkd = unicodedata.normalize('NFKD', unicode(s))
+    return u''.join(ch for ch in nfkd if not unicodedata.combining(ch))
+
+
+def slugify(s):
+    """Converts the given string to a URL slug."""
+    s = strip_accents(s.replace("'", '').lower())
+    return re.sub('[^a-z0-9]+', ' ', s).strip().replace(' ', '-')
+
+
 def get_last_row_id():
+    """Returns the row ID of the last insert statement."""
     return dbkit.query_value("SELECT LAST_INSERT_ROWID()")
 
 
@@ -57,7 +72,7 @@ def save_entry(note):
     return get_last_row_id()
 
 
-class frontpage(object):
+class Frontpage(object):
 
     def GET(self):
         with pool.connect():
