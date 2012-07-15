@@ -35,7 +35,8 @@ class most_recent(object):
     def GET(self):
         with pool.connect():
             recent_entries = list(get_recent_entries())
-        return render.recent_entries(entries=list(recent_entries))
+        return render.layout(
+            render.recent_entries(entries=list(recent_entries)))
 
     def POST(self):
         with pool.connect():
