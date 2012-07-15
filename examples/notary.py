@@ -27,11 +27,16 @@ RECENT_ENTRIES = """<!DOCTYPE html>
     </head>
     <body>
         <h1>Recent entries</h1>
+        {{#entries?}}
         <ul>
         {{#entries}}
         <li>{{note}}</li>
         {{/entries}}
         </ul>
+        {{/entries?}}
+        {{^entries?}}
+        <p><em>No entries!</em></p>
+        {{/entries?}}
     </body>
 </html>"""
 
