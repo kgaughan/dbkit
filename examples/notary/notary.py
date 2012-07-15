@@ -50,6 +50,14 @@ def get_projects():
         """)
 
 
+def get_project(slug):
+    return dbkit.query_row("""
+        SELECT  project_id, slug, project
+        FROM    projects
+        WHERE   slug = ?
+        """, (slug,))
+
+
 @dbkit.transactional
 def add_project(project):
     slug = slugify(project)
@@ -69,10 +77,10 @@ def get_notes(project_id):
 
 
 @dbkit.transactional
-def save_entry(note):
+def save_note(project_id, note):
     dbkit.execute("""
-        INSERT INTO notes (note) VALUES (?)
-        """, (note,))
+        INSERT INTO notes (project_id, note) VALUES (?, ?)
+        """, (project_id, note))
     return get_last_row_id()
 
 
@@ -90,6 +98,28 @@ class Frontpage(object):
         with pool.connect():
             _, slug = add_project(form.project)
         raise web.seeother(slug + '/')
+
+
+class Project(object):
+
+    def GET(self, slug):
+        with pool.connect():
+            project = get_project(slug)
+            if not project:
+                raise web.notfound("No such project.")
+            notes = get_notes(project.project_id)
+        return render.layout(
+            render.project(project=project, notes=list(notes)),
+            "Project: " + project.project)
+
+    def POST(self, slug):
+        form = web.input(note='')
+        with pool.connect():
+            project = get_project(slug)
+            if not project:
+                raise web.notfound("No such project.")
+            note_id = save_note(project.project_id, form.note)
+        raise web.seeother('#p' + str(note_id))
 
 
 if __name__ == '__main__':

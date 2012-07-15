@@ -1,15 +1,17 @@
-$def with (entries)
-<h1>Recent entries</h1>
+$def with (project, notes)
+<h1>Notes for $project.project</h1>
 
-$if entries:
+<p><a href="..">Back to projects</a></p>
+
+$if notes:
 	<ul>
-	$for entry in entries:
-		<li>$entry.note
-		<a href="#p$entry.id" name="p$entry.id" class="pnum">&para;</a>
+	$for note in notes:
+		<li>$note.note
+		<a href="#p$note.note_id" name="p$note.note_id" class="pnum">&para;</a>
 		</li>
 	</ul>
 $else:
-	<p><em>No entries!</em></p>
+	<p><em>No notes!</em></p>
 
 <form action="" method="post">
 <div><textarea name="note"></textarea></div>
