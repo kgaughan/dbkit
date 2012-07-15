@@ -1,0 +1,23 @@
+$def with (entries)
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Recent entries</title>
+	</head>
+	<body>
+		<h1>Recent entries</h1>
+
+		$if entries:
+			<ul>
+			$for entry in entries:
+				<li>$entry['note']</li>
+			</ul>
+		$else:
+			<p><em>No entries!</em></p>
+
+		<form action="" method="post">
+		<div><textarea name="note"></textarea></div>
+		<div><input type="submit" value="Post"></div>
+		</form>
+	</body>
+</html>

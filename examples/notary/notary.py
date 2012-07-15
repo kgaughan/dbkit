@@ -7,7 +7,6 @@ database driver support for connection pooling.
 
 import web
 import sqlite3
-import pystache
 import dbkit
 
 
@@ -16,35 +15,9 @@ urls = (
 )
 
 app = web.application(urls, globals())
+render = web.template.render('templates')
 pool = dbkit.create_pool(sqlite3, 10, "notary.db")
 pool.default_factory = dbkit.dict_set
-
-
-RECENT_ENTRIES = """<!DOCTYPE html>
-<html>
-    <head>
-        <title>Recent entries</title>
-    </head>
-    <body>
-        <h1>Recent entries</h1>
-
-        {{#has_entries}}<ul>{{/has_entries}}
-        {{#entries}}
-        <li>{{note}}</li>
-        {{/entries}}
-        </ul>
-        {{#has_entries}}</ul>{{/has_entries}}
-
-        {{^entries}}
-        <p><em>No entries!</em></p>
-        {{/entries}}
-
-        <form action="" method="post">
-        <div><textarea name="note"></textarea></div>
-        <div><input type="submit" value="Post"></div>
-        </form>
-    </body>
-</html>"""
 
 
 def get_recent_entries():
@@ -62,9 +35,7 @@ class most_recent(object):
     def GET(self):
         with pool.connect():
             recent_entries = list(get_recent_entries())
-        return pystache.render(RECENT_ENTRIES, {
-            'entries': recent_entries,
-            'has_entries': len(recent_entries) > 0})
+        return render.recent_entries(entries=list(recent_entries))
 
     def POST(self):
         with pool.connect():
