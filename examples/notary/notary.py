@@ -27,7 +27,11 @@ def get_last_row_id():
 
 def get_projects():
     return dbkit.query("""
-        SELECT project_id, project FROM projects ORDER BY project
+        SELECT    project_id, project, COUNT(note_id) AS notes
+        FROM      projects
+        LEFT JOIN notes USING (project_id)
+        GROUP BY  project_id
+        ORDER BY  project
         """)
 
 

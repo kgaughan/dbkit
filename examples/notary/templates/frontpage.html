@@ -4,7 +4,8 @@ $def with (projects)
 $if projects:
 	<ul>
 	$for project in projects:
-		<li><a href="$project['project_id']/">$project['project']</a></li>
+		<li><a href="$project['project_id']/">$project['project']</a>
+		($project['notes'])</li>
 	</ul>
 $else:
 	<p><em>No projects!</em></p>
