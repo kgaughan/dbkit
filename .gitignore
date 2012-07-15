@@ -13,3 +13,6 @@ _build/
 .coverage
 .tox
 __pycache__
+# Other random nonsense
+/.venv
+*.db
