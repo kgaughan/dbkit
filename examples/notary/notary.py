@@ -55,7 +55,7 @@ def get_projects():
 
 def get_project(slug):
     return dbkit.query_row("""
-        SELECT  project_id, slug, project
+        SELECT  project_id, slug, project, overview
         FROM    projects
         WHERE   slug = ?
         """, (slug,))

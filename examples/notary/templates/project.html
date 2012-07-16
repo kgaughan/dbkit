@@ -4,6 +4,9 @@ $var title: Notes for $project.project
 
 <p><a href="..">Back to projects</a></p>
 
+$if project.overview:
+	<div class="overview">$:creole2html(project.overview)</div>
+
 $for note in notes:
 	<div class="note">
 	<a href="#p$note.note_id" name="p$note.note_id" class="pnum">&para;</a>
