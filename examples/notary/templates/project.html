@@ -5,7 +5,10 @@ $var title: Notes for $project.project
 <p><a href="..">Back to projects</a></p>
 
 $if project.overview:
+	<h2>Overview</h2>
 	<div class="overview">$:creole2html(project.overview)</div>
+
+<h2>Notes</h2>
 
 <form action="" method="post">
 <div><textarea name="note"></textarea></div>
