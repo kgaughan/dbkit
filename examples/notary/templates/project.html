@@ -7,6 +7,11 @@ $var title: Notes for $project.project
 $if project.overview:
 	<div class="overview">$:creole2html(project.overview)</div>
 
+<form action="" method="post">
+<div><textarea name="note"></textarea></div>
+<div><input type="submit" value="Post"></div>
+</form>
+
 $for note in notes:
 	<div class="note">
 	<a href="#p$note.note_id" name="p$note.note_id" class="pnum">&para;</a>
@@ -14,8 +19,3 @@ $for note in notes:
 	</div>
 $if not notes:
 	<p><em>No notes!</em></p>
-
-<form action="" method="post">
-<div><textarea name="note"></textarea></div>
-<div><input type="submit" value="Post"></div>
-</form>
