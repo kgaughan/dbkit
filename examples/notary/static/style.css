@@ -3,6 +3,14 @@ html {
 	margin: 0 auto;
 }
 
+h1, h2, h3, h4, h5, h6 {
+	color: #040;
+}
+
+h1 {
+	border-bottom: 1px solid silver;
+}
+
 a.pnum {
 	color: #C8A8FF;
 	text-decoration: none;
