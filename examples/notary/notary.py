@@ -10,6 +10,7 @@ import sqlite3
 import dbkit
 import unicodedata
 import re
+import creole
 
 
 urls = (
@@ -18,7 +19,9 @@ urls = (
 )
 
 app = web.application(urls, globals())
-render = web.template.render('templates', base='layout')
+render = web.template.render('templates', base='layout', globals={
+    'creole2html': creole.creole2html
+})
 pool = dbkit.create_pool(sqlite3, 10, "notary.db")
 pool.default_factory = dbkit.dict_set
 

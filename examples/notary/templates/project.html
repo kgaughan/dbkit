@@ -4,14 +4,12 @@ $var title: Notes for $project.project
 
 <p><a href="..">Back to projects</a></p>
 
-$if notes:
-	<ul>
-	$for note in notes:
-		<li>$note.note
-		<a href="#p$note.note_id" name="p$note.note_id" class="pnum">&para;</a>
-		</li>
-	</ul>
-$else:
+$for note in notes:
+	<div class="note">
+	<a href="#p$note.note_id" name="p$note.note_id" class="pnum">&para;</a>
+	$:creole2html(note.note)
+	</div>
+$if not notes:
 	<p><em>No notes!</em></p>
 
 <form action="" method="post">

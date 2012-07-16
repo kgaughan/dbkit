@@ -6,6 +6,18 @@ html {
 a.pnum {
 	color: #C8A8FF;
 	text-decoration: none;
-	font-size: 80%;
 	font-weight: bold;
+	display: block;
+	float: left;
+	margin-left: -1.5em;
+	width: 1.5em;
+	text-align: center;
+}
+
+div.note:hover {
+	background: #FF8;
+}
+div.note:hover a.pnum {
+	background: #FF8;
+	color: #A868FF;
 }
