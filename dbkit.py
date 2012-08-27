@@ -29,7 +29,7 @@ __all__ = (
     'unindent_statement', 'make_file_object_logger',
     'null_logger', 'stderr_logger')
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __author__ = 'Keith Gaughan'
 __email__ = 'k@stereochro.me'
 
