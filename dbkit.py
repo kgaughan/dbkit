@@ -765,7 +765,7 @@ class AttrDict(dict):
         try:
             return self[key]
         except KeyError, exc:
-            raise AttributeError, exc
+            raise AttributeError(exc)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -774,7 +774,7 @@ class AttrDict(dict):
         try:
             del self[key]
         except KeyError, exc:
-            raise AttributeError, exc
+            raise AttributeError(exc)
 
     def __repr__(self):
         return '<AttrDict ' + dict.__repr__(self) + '>'
