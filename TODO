@@ -36,4 +36,4 @@ thread to occasionally poke the various pools, but for now a reap method
 will do.
 
 
-.. vim:set textwidth=74 et lbr:
+.. vim:set textwidth=74 et lbr ft=rst:
