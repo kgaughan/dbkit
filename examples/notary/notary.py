@@ -126,3 +126,5 @@ if __name__ == '__main__':
         app.run()
     finally:
         pool.finalise()
+else:
+    wsgi_app = app.wsgifunc()
