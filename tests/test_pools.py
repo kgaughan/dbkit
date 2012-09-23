@@ -46,7 +46,7 @@ def test_bad_query():
             assert POOL._allocated == 0
 
 
-def test_contention():
+def test_pool_contention():
     pool = dbkit.Pool(fakedb, 1, fakedb.INVALID_CURSOR)
     # Here, we're testing that the pool behaves properly when it hits its
     # maximum number of connections and a thread it waiting for another one
@@ -85,6 +85,43 @@ def test_contention():
     pool.finalise()
     assert pool._allocated == 0
     assert len(pool._pool) == 0
+
+
+def test_dummy_pool_contention():
+    pool = dbkit.DummyPool(fakedb, 1, fakedb.INVALID_CURSOR)
+    # Here, we're testing that the pool behaves properly when it hits its
+    # maximum number of connections and a thread it waiting for another one
+    # to release the connection it's currently using.
+    release = threading.Event()
+    spawn = threading.Event()
+
+    def hog_connection():
+        with pool.connect() as ctx:
+            with dbkit.transaction():
+                spawn.set()
+                release.wait()
+
+    def wait_on_connection():
+        with pool.connect() as ctx:
+            spawn.wait()
+            # Request the other thread to release the connection after a
+            # short period, enough to ensure the conditional variable
+            # managing the pool is waited on by this thread. Basically
+            # nearly any pause should be long enough, though 1/100 of a
+            # second seems like a reasonable balance.
+            #
+            # We do this because we want to deterministically introduce a
+            # wait on the condition variable that signals when there's a free
+            # connection. In normal operation, this happens in a
+            # nondeterministic manner. This pause and the use of the release
+            # and spawn events ensure that the threads proceed in lockstep
+            # to produce the behaviour we need to set.
+            threading.Timer(1.0 / 100, lambda: release.set()).start()
+            with dbkit.transaction():
+                pass
+    utils.spawn([wait_on_connection, hog_connection])
+
+    pool.finalise()
 
 
 def test_setting_propagation():
