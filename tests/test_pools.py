@@ -47,6 +47,7 @@ def test_bad_query():
 
 
 def test_contention():
+    pool = dbkit.Pool(fakedb, 1, fakedb.INVALID_CURSOR)
     # Here, we're testing that the pool behaves properly when it hits its
     # maximum number of connections and a thread it waiting for another one
     # to release the connection it's currently using.
@@ -54,13 +55,13 @@ def test_contention():
     spawn = threading.Event()
 
     def hog_connection():
-        with POOL.connect() as ctx:
+        with pool.connect() as ctx:
             with dbkit.transaction():
                 spawn.set()
                 release.wait()
 
     def wait_on_connection():
-        with POOL.connect() as ctx:
+        with pool.connect() as ctx:
             spawn.wait()
             # Request the other thread to release the connection after a
             # short period, enough to ensure the conditional variable
@@ -79,13 +80,11 @@ def test_contention():
                 pass
     utils.spawn([wait_on_connection, hog_connection])
 
-
-def test_finalise():
-    assert POOL._allocated == 1
-    assert len(POOL._pool) == 1
-    POOL.finalise()
-    assert POOL._allocated == 0
-    assert len(POOL._pool) == 0
+    assert pool._allocated == 1
+    assert len(pool._pool) == 1
+    pool.finalise()
+    assert pool._allocated == 0
+    assert len(pool._pool) == 0
 
 
 def test_setting_propagation():
