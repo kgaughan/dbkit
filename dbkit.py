@@ -482,7 +482,7 @@ class ThreadAffinePool(PoolBase):
         self._cond.release()
 
 
-class DummyPool(Pool):
+class DummyPool(PoolBase):
     """
     This pool only imposes limits on the number of connections that can be
     held open concurrently. Connections are closed as soon as the context
