@@ -411,77 +411,6 @@ class Pool(PoolBase):
         self._cond.release()
 
 
-class ThreadAffinePool(PoolBase):
-    """
-    A connection pool that allows a maximum of one connection per thread and
-    that connection has strict affinity with its thread. This is needed to
-    allow type 1 (thread safe module, thread unsafe connections) drivers to
-    be pooled (after a fashion).
-    """
-
-    __slots__ = ('_cond', '_starved', '_local', '_max_conns', '_allocated')
-
-    def __init__(self, module, max_conns, *args, **kwargs):
-        super(ThreadAffinePool, self).__init__(module, 1, args, kwargs)
-        self._cond = threading.Condition()
-        self._starved = threading.Event()
-        self._max_conns = max_conns
-        self._allocated = 0
-        self._local = threading.local()
-
-    def acquire(self):
-        conn = self._local.__dict__.get('conn', None)
-        if conn is not None:
-            return conn
-
-        # Attempt to acquire a fresh connection.
-        self._cond.acquire()
-        try:
-            while True:
-                if self._allocated < self._max_conns:
-                    conn = self._connect()
-                    self._local.conn = conn
-                    self._allocated += 1
-                    return conn
-                # Signal that there is at least one thread that needs a
-                # connection. The next thread release its connection
-                # should thus release it completely.
-                self._starved.set()
-                self._cond.wait()
-        finally:
-            self._cond.release()
-
-    def release(self, conn):
-        self._cond.acquire()
-        if self._starved.isSet():
-            # pylint: disable-msg=W0702
-            try:
-                conn.close()
-            except:  # pragma: no cover
-                pass
-            self._local.conn = None
-            self._allocated -= 1
-            self._starved.clear()
-            self._cond.notify()
-        self._cond.release()
-
-    def discard(self):
-        self._cond.acquire()
-        self._local.conn = None
-        self._allocated -= 1
-        self._starved.clear()
-        self._cond.notify()
-        self._cond.release()
-
-    def finalise(self):
-        self._cond.acquire()
-        # Wait until all the threads using this pool return their connections.
-        while self._allocated > 0:
-            self._starved.set()
-            self._cond.wait()
-        self._cond.release()
-
-
 class DummyPool(PoolBase):
     """
     This pool only imposes limits on the number of connections that can be
@@ -550,12 +479,13 @@ def create_pool(module, max_conns, *args, **kwargs):
         raise NotSupported("Cannot determine driver threadsafety.")
     if max_conns < 1:
         raise ValueError("Minimum number of connections is 1.")
-    if module.threadsafety > 1:
+    if module.threadsafety >= 2:
         return Pool(module, max_conns, *args, **kwargs)
-    if module.threadsafety > 0:
-        return ThreadAffinePool(module, max_conns, *args, **kwargs)
-    if module.threadsafety == 0:
+    #if module.threadsafety >= 1:
+    #    return ThreadAffinePool(module, max_conns, *args, **kwargs)
+    if module.threadsafety >= 0:
         return DummyPool(module, 1, *args, **kwargs)
+    raise ValueError("Bad threadsafety level: %d", module.threadsafety)
 
 
 def context():
