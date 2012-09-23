@@ -91,8 +91,8 @@ class Frontpage(object):
 
     def GET(self):
         with pool.connect():
-            projects = get_projects()
-        return render.frontpage(projects=list(projects))
+            projects = list(get_projects())
+        return render.frontpage(projects=projects)
 
     def POST(self):
         form = web.input(project='')
@@ -108,8 +108,8 @@ class Project(object):
             project = get_project(slug)
             if not project:
                 raise web.notfound("No such project.")
-            notes = get_notes(project.project_id)
-        return render.project(project=project, notes=list(notes))
+            notes = list(get_notes(project.project_id))
+        return render.project(project=project, notes=notes)
 
     def POST(self, slug):
         form = web.input(note='')
