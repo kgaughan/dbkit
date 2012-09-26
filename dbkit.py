@@ -151,8 +151,8 @@ class Context(object):
     @contextlib.contextmanager
     def cursor(self):
         """Get a cursor for the current connection. For internal use only."""
-        with self._mdr as conn:
-            cursor = conn.cursor()
+        with self._mdr:
+            cursor = self._mdr.cursor()
             try:
                 yield cursor
             except:
@@ -199,12 +199,16 @@ class ConnectionMediatorBase(object):
     0.
     """
 
-    __slots__ = ('OperationalError', 'conn', 'depth')
+    __slots__ = (
+        'OperationalError', 'InterfaceError',
+        'conn', 'depth')
 
     def __init__(self, exceptions):
         super(ConnectionMediatorBase, self).__init__()
         # pylint: disable-msg=C0103
         self.OperationalError = exceptions.OperationalError
+        # pylint: disable-msg=C0103
+        self.InterfaceError = exceptions.InterfaceError
         # The currently acquired connection, or None.
         self.conn = None
         # When this reaches 0, we release
@@ -214,6 +218,10 @@ class ConnectionMediatorBase(object):
         raise NotImplementedError()
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
+        raise NotImplementedError()
+
+    def cursor(self):
+        """Get a cursor for the current connection."""
         raise NotImplementedError()
 
     def close(self):
@@ -255,6 +263,13 @@ class SingleConnectionMediator(ConnectionMediatorBase):
                 pass
             self.conn = None
 
+    def cursor(self):
+        try:
+            return self.conn.cursor()
+        except self.InterfaceError:
+            self.conn = self.connect()
+            return self.conn.cursor()
+
     def close(self):
         if self.conn is not None:
             try:
@@ -287,6 +302,22 @@ class PooledConnectionMediator(ConnectionMediatorBase):
             elif self.depth == 0:
                 self.pool.release(self.conn)
                 self.conn = None
+
+    def cursor(self):
+        try:
+            return self.conn.cursor()
+        except self.InterfaceError:
+            # Go through each of the remaining connections
+            attempts_left = self.pool.get_max_reattempts()
+            while attempts_left > 0:
+                self.pool.discard()
+                self.conn = self.pool.acquire()
+                try:
+                    return self.conn.cursor()
+                except self.InterfaceError:
+                    if attempts_left == 1:
+                        raise
+                attempts_left -= 1
 
     def close(self):
         # Nothing currently, but may in the future signal to pool to
@@ -356,6 +387,14 @@ class PoolBase(object):
         ctx.default_factory = self.default_factory
         return ctx
 
+    # pylint: disable-msg=R0201
+    def get_max_reattempts(self):
+        """
+        Number of times this pool should be reattempted when attempting to
+        get a fresh connection.
+        """
+        return 1
+
 
 class Pool(PoolBase):
     """A very simple connection pool."""
@@ -417,6 +456,9 @@ class Pool(PoolBase):
                 pass
         self._pool.clear()
         self._cond.release()
+
+    def get_max_reattempts(self):
+        return min(self._allocated + 1, self._max_conns)
 
 
 def _make_connect(module, args, kwargs):
