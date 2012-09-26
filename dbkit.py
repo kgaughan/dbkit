@@ -130,7 +130,7 @@ class Context(object):
         # The idea here is to fake the nesting of transactions. Only when
         # we've gotten back to the topmost transaction context do we actually
         # commit or rollback.
-        with self._mdr as conn:
+        with self._mdr:
             try:
                 self._depth += 1
                 yield self
@@ -143,10 +143,10 @@ class Context(object):
             except:
                 self._depth -= 1
                 if self._depth == 0:
-                    conn.rollback()
+                    self._mdr.rollback()
                 raise
             if self._depth == 0:
-                conn.commit()
+                self._mdr.commit()
 
     @contextlib.contextmanager
     def cursor(self):
@@ -219,6 +219,14 @@ class ConnectionMediatorBase(object):
     def close(self):
         """Called to signal that any resources can be released."""
         raise NotImplementedError()
+
+    def rollback(self):
+        """Rollback the current transaction."""
+        self.conn.rollback()
+
+    def commit(self):
+        """Commit the current transaction."""
+        self.conn.commit()
 
 
 class SingleConnectionMediator(ConnectionMediatorBase):
