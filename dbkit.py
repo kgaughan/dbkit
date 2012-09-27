@@ -200,15 +200,13 @@ class ConnectionMediatorBase(object):
     """
 
     __slots__ = (
-        'OperationalError', 'InterfaceError',
+        'OperationalError', 'InterfaceError', 'DatabaseError',
         'conn', 'depth')
 
     def __init__(self, exceptions):
         super(ConnectionMediatorBase, self).__init__()
-        # pylint: disable-msg=C0103
-        self.OperationalError = exceptions.OperationalError
-        # pylint: disable-msg=C0103
-        self.InterfaceError = exceptions.InterfaceError
+        for exc in ('OperationalError', 'InterfaceError', 'DatabaseError'):
+            setattr(self, exc, getattr(exceptions, exc))
         # The currently acquired connection, or None.
         self.conn = None
         # When this reaches 0, we release
@@ -265,10 +263,16 @@ class SingleConnectionMediator(ConnectionMediatorBase):
 
     def cursor(self):
         try:
-            return self.conn.cursor()
-        except self.InterfaceError:
+            cursor = self.conn.cursor()
+            cursor.execute('SELECT 1')
+            cursor.fetchall()
+        except (self.InterfaceError, self.DatabaseError):
+            del self.conn
             self.conn = self.connect()
-            return self.conn.cursor()
+            cursor = self.conn.cursor()
+            cursor.execute('SELECT 1')
+            cursor.fetchall()
+        return cursor
 
     def close(self):
         if self.conn is not None:
@@ -305,19 +309,25 @@ class PooledConnectionMediator(ConnectionMediatorBase):
 
     def cursor(self):
         try:
-            return self.conn.cursor()
-        except self.InterfaceError:
+            cursor = self.conn.cursor()
+            cursor.execute('SELECT 1')
+            cursor.fetchall()
+        except (self.InterfaceError, self.DatabaseError):
             # Go through each of the remaining connections
             attempts_left = self.pool.get_max_reattempts()
             while attempts_left > 0:
                 self.pool.discard()
                 self.conn = self.pool.acquire()
                 try:
-                    return self.conn.cursor()
-                except self.InterfaceError:
+                    cursor = self.conn.cursor()
+                    cursor.execute('SELECT 1')
+                    cursor.fetchall()
+                    break
+                except (self.InterfaceError, self.DatabaseError):
                     if attempts_left == 1:
                         raise
                 attempts_left -= 1
+        return cursor
 
     def close(self):
         # Nothing currently, but may in the future signal to pool to
@@ -458,7 +468,8 @@ class Pool(PoolBase):
         self._cond.release()
 
     def get_max_reattempts(self):
-        return min(self._allocated + 1, self._max_conns)
+        # We retry one extra times to 
+        return self._max_conns + 1
 
 
 def _make_connect(module, args, kwargs):

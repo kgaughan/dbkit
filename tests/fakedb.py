@@ -77,7 +77,11 @@ class Cursor(object):
     def execute(self, stmt, args=()):
         if not self.valid or not self.connection.valid:
             raise InterfaceError()
-        stmt_type, = stmt.lstrip().lower().split(' ', 1)
+        stmt = stmt.lstrip().lower()
+        # It's the ping!
+        if stmt == 'select 1':
+            return self
+        stmt_type, = stmt.split(' ', 1)
         if stmt_type in ('select', 'update', 'insert', 'delete'):
             self.result = None if args is () else args
             self.connection.session.append(stmt_type)
@@ -99,6 +103,9 @@ class Cursor(object):
         result = self.result
         self.result = None
         return result
+
+    def fetchall(self):
+        return ()
 
 
 class Warning(StandardError):
