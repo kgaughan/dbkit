@@ -1,13 +1,3 @@
-﻿:Author:
-    Keith Gaughan (http://stereochro.me)
-
-:Repo:
-    https://github.com/kgaughan/dbkit
-
-:Documentation:
-    http://dbkit.readthedocs.org/
-
-
 **dbkit** is a library that abstracts away at least part of the pain
 involved in dealing with `DB-API 2`_ compatible database drivers.
 
@@ -25,6 +15,15 @@ involved in dealing with `DB-API 2`_ compatible database drivers.
     with connect(sqlite3, 'counters.db') as ctx, closing(ctx):
         for counter, value in query('SELECT counter, value FROM counters'):
             print "%s: %d" % (counter, value)
+
+:Author:
+    Keith Gaughan (http://stereochro.me)
+
+:Repo:
+    https://github.com/kgaughan/dbkit
+
+:Documentation:
+    http://dbkit.readthedocs.org/
 
 
 Overview
