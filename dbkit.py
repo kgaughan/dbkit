@@ -29,7 +29,7 @@ __all__ = (
     'unindent_statement', 'make_file_object_logger',
     'null_logger', 'stderr_logger')
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 __author__ = 'Keith Gaughan'
 __email__ = 'k@stereochro.me'
 
@@ -590,8 +590,11 @@ def transactional(wrapped):
 
 
 def execute(stmt, args=()):
-    """Execute an SQL statement."""
-    Context.current().execute(stmt, args).close()
+    """Execute an SQL statement. Returns the number of affected rows."""
+    cursor = Context.current().execute(stmt, args)
+    row_count = cursor.rowcount
+    cursor.close()
+    return row_count
 
 
 def query(stmt, args=(), factory=None):
@@ -625,8 +628,11 @@ def query_column(stmt, args=()):
 
 
 def execute_proc(procname, args=()):
-    """Execute a stored procedure."""
-    Context.current().execute_proc(procname, args).close()
+    """Execute a stored procedure. Returns the number of affected rows."""
+    cursor = Context.current().execute_proc(procname, args)
+    row_count = cursor.rowcount
+    cursor.close()
+    return row_count
 
 
 def query_proc(procname, args=(), factory=None):

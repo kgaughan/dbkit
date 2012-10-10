@@ -56,7 +56,7 @@ class Cursor(object):
     A fake cursor.
     """
 
-    __slots__ = ['connection', 'valid', 'result']
+    __slots__ = ['connection', 'valid', 'result', 'rowcount']
 
     def __init__(self, connection):
         self.connection = connection
@@ -66,6 +66,7 @@ class Cursor(object):
             raise OperationalError()
         connection.cursors += 1
         self.valid = True
+        self.rowcount = -1
 
     def close(self):
         self.connection.session.append('cursor-close')
