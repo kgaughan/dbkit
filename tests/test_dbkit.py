@@ -41,6 +41,7 @@ def setup():
         dbkit.execute(SCHEMA)
         with dbkit.transaction():
             dbkit.execute(TEST_DATA)
+            assert ctx.last_row_count == 1
     return ctx
 
 

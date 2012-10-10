@@ -91,7 +91,9 @@ class _ContextStack(threading.local):
 class Context(object):
     """A database connection context."""
 
-    __slots__ = ('_mdr', '_depth', 'logger', 'default_factory') + _EXCEPTIONS
+    __slots__ = (
+        '_mdr', '_depth', 'logger', 'default_factory',
+        'last_row_count', 'last_row_id') + _EXCEPTIONS
     stack = _ContextStack()
 
     def __init__(self, module, mdr):
@@ -103,6 +105,8 @@ class Context(object):
         self._depth = 0
         self.logger = null_logger
         self.default_factory = tuple_set
+        self.last_row_count = None
+        self.last_row_id = None
         # Copy driver module's exception references.
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
@@ -155,7 +159,12 @@ class Context(object):
             cursor = self._mdr.cursor()
             try:
                 yield cursor
+                if cursor.rowcount != -1:
+                    self.last_row_count = cursor.rowcount
+                self.last_row_id = getattr(cursor, 'lastrowid', None)
             except:
+                self.last_row_count = None
+                self.last_row_id = None
                 cursor.close()
                 raise
 
