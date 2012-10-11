@@ -55,19 +55,16 @@ logger = logging.getLogger(__name__)
 
 class NoContext(StandardError):
     """You are attempting to use dbkit outside of a database context."""
-    __slots__ = ()
 
 
 class NotSupported(StandardError):
     """You are attempting something unsupported."""
-    __slots__ = ()
 
 
 class AbortTransaction(Exception):
     """
     Raised to signal that code within the transaction wants to abort it.
     """
-    __slots__ = ()
 
 
 class _ContextStack(threading.local):
@@ -229,10 +226,12 @@ class ConnectionMediatorBase(object):
         'OperationalError', 'InterfaceError', 'DatabaseError',
         'conn', 'depth')
 
+    # pylint: disable-msg=C0103
     def __init__(self, exceptions):
         super(ConnectionMediatorBase, self).__init__()
-        for exc in ('OperationalError', 'InterfaceError', 'DatabaseError'):
-            setattr(self, exc, getattr(exceptions, exc))
+        self.OperationalError = exceptions.OperationalError
+        self.InterfaceError = exceptions.InterfaceError
+        self.DatabaseError = exceptions.DatabaseError
         # The currently acquired connection, or None.
         self.conn = None
         # When this reaches 0, we release
@@ -498,7 +497,8 @@ class Pool(PoolBase):
         self._cond.release()
 
     def get_max_reattempts(self):
-        # We retry one extra times to 
+        # We retry one extra time to ensure that if the pool is exhausted,
+        # we create a fresh connection instead.
         return self._max_conns + 1
 
 
@@ -787,14 +787,14 @@ def null_logger(_stmt, _args):
 
 def make_file_object_logger(fh):
     """Make a logger that logs to the given file object."""
-    def logger(stmt, args, fh=fh):
+    def logger_func(stmt, args, fh=fh):
         """A logger that logs everything sent to a file object."""
         now = datetime.datetime.now()
         print >> fh, "Executing (%s):" % now.isoformat()
         print >> fh, unindent_statement(stmt)
         print >> fh, "Arguments:"
         pprint.pprint(args, fh)
-    return logger
+    return logger_func
 
 
 # pylint:disable-msg=C0103
