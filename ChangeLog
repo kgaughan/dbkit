@@ -4,6 +4,20 @@
 Change history
 ==============
 
+.. _version-0.1.4:
+
+0.1.4
+=====
+:Release date: 2012-10-11T12:59:00.Z
+:By: Keith Gaughan
+
+* `execute*()` now returns the number of affected rows.
+* Add `last_row_count` and `last_row_id` to `Context`.
+* Remove `DummyPool` and `ThreadAffinePool`, though the latter may be
+  returning.
+* Stablise the behaviour of `Pool` when dealing with expired connections.
+* Documentation version is now pegged directly to the library.
+
 .. _version-0.1.2:
 
 0.1.2
