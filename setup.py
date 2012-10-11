@@ -2,7 +2,7 @@
 
 from __future__ import with_statement
 
-from distutils.core import setup
+from setuptools import setup
 from buildkit import *
 
 
