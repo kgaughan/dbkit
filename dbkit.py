@@ -413,9 +413,13 @@ class PoolBase(object):
         """
         raise NotImplementedError()
 
+    def create_mediator(self):
+        """Create a suitable mediator for this pool."""
+        return PooledConnectionMediator(self)
+
     def connect(self):
         """Returns a context that uses this pool as a connection source."""
-        ctx = Context(self.module, PooledConnectionMediator(self))
+        ctx = Context(self.module, self.create_mediator())
         ctx.logger = self.logger
         ctx.default_factory = self.default_factory
         return ctx
