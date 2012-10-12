@@ -619,6 +619,11 @@ def transactional(wrapped):
     return functools.update_wrapper(wrapper, wrapped)
 
 
+def last_row_id():
+    """Return the row ID of the last (insert) statement."""
+    return Context.current().last_row_id
+
+
 def execute(stmt, args=()):
     """Execute an SQL statement. Returns the number of affected rows."""
     cursor = Context.current().execute(stmt, args)

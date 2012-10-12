@@ -43,11 +43,6 @@ def slugify(s):
     return re.sub('[^a-z0-9]+', ' ', s).strip().replace(' ', '-')
 
 
-def get_last_row_id():
-    """Returns the row ID of the last insert statement."""
-    return dbkit.query_value("SELECT LAST_INSERT_ROWID()")
-
-
 def get_projects():
     return dbkit.query("""
         SELECT    slug, project, COUNT(note_id) AS notes
@@ -70,9 +65,9 @@ def get_project(slug):
 def add_project(project):
     slug = slugify(project)
     dbkit.execute("""
-        INSERT INTO projects (project, slug) VALUES (?, ?)
+        INSERT INTO projects (project, slug, overview) VALUES (?, ?, '')
         """, (project, slug))
-    return (get_last_row_id(), slug)
+    return (dbkit.last_row_id(), slug)
 
 
 def get_notes(project_id):
@@ -89,7 +84,7 @@ def save_note(project_id, note):
     dbkit.execute("""
         INSERT INTO notes (project_id, note) VALUES (?, ?)
         """, (project_id, note))
-    return get_last_row_id()
+    return dbkit.last_row_id()
 
 
 class Frontpage(object):
