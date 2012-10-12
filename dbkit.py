@@ -174,7 +174,7 @@ class Context(object):
                 self.last_row_count = None
                 self.last_row_id = None
                 logger.debug("Closing cursor")
-                cursor.close()
+                _safe_close(cursor)
                 raise
 
     def execute(self, stmt, args):
@@ -283,11 +283,7 @@ class SingleConnectionMediator(ConnectionMediatorBase):
     def __exit__(self, exc_type, _exc_value, _traceback):
         self.depth -= 1
         if exc_type is self.OperationalError:
-            # pylint: disable-msg=W0702
-            try:
-                self.conn.close()
-            except:  # pragma: no cover
-                pass
+            _safe_close(self.conn)
             self.conn = None
 
     def cursor(self):
@@ -305,10 +301,8 @@ class SingleConnectionMediator(ConnectionMediatorBase):
 
     def close(self):
         if self.conn is not None:
-            try:
-                self.conn.close()
-            finally:
-                self.conn = None
+            _safe_close(self.conn)
+            self.conn = None
 
 
 class PooledConnectionMediator(ConnectionMediatorBase):
@@ -487,12 +481,8 @@ class Pool(PoolBase):
         while len(self._pool) < self._allocated:
             self._cond.wait()
         for conn in self._pool:
-            # pylint: disable-msg=W0702
-            try:
-                self._allocated -= 1
-                conn.close()
-            except:  # pragma: no cover
-                pass
+            self._allocated -= 1
+            _safe_close(conn)
         self._pool.clear()
         self._cond.release()
 
@@ -628,7 +618,7 @@ def execute(stmt, args=()):
     """Execute an SQL statement. Returns the number of affected rows."""
     cursor = Context.current().execute(stmt, args)
     row_count = cursor.rowcount
-    cursor.close()
+    _safe_close(cursor)
     return row_count
 
 
@@ -666,7 +656,7 @@ def execute_proc(procname, args=()):
     """Execute a stored procedure. Returns the number of affected rows."""
     cursor = Context.current().execute_proc(procname, args)
     row_count = cursor.rowcount
-    cursor.close()
+    _safe_close(cursor)
     return row_count
 
 
@@ -717,7 +707,7 @@ def dict_set(cursor):
                 break
             yield AttrDict(zip(columns, row))
     finally:
-        cursor.close()
+        _safe_close(cursor)
 
 
 def tuple_set(cursor):
@@ -729,7 +719,7 @@ def tuple_set(cursor):
                 break
             yield row
     finally:
-        cursor.close()
+        _safe_close(cursor)
 
 
 def column_set(cursor):
@@ -741,7 +731,7 @@ def column_set(cursor):
                 break
             yield row[0]
     finally:
-        cursor.close()
+        _safe_close(cursor)
 
 
 class AttrDict(dict):
@@ -766,6 +756,15 @@ class AttrDict(dict):
 
     def __repr__(self):
         return '<AttrDict ' + dict.__repr__(self) + '>'
+
+
+def _safe_close(obj):
+    """Call the close method on an object safely."""
+    # pylint: disable-msg=W0702
+    try:
+        obj.close()
+    except:  # pragma: no cover
+        pass
 
 
 def unindent_statement(stmt):
