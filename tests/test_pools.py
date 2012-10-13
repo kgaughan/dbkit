@@ -5,7 +5,7 @@ import dbkit
 from tests import fakedb, utils
 
 
-POOL = dbkit.Pool(fakedb, 1, fakedb.INVALID_CURSOR)
+POOL = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
 
 
 def test_check_pool():
@@ -47,7 +47,7 @@ def test_bad_query():
 
 
 def test_pool_contention():
-    pool = dbkit.Pool(fakedb, 1, fakedb.INVALID_CURSOR)
+    pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
     # Here, we're testing that the pool behaves properly when it hits its
     # maximum number of connections and a thread it waiting for another one
     # to release the connection it's currently using.
@@ -88,7 +88,7 @@ def test_pool_contention():
 
 
 def test_setting_propagation():
-    pool = dbkit.Pool(fakedb, 1, fakedb.INVALID_CURSOR)
+    pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
     try:
         assert pool.default_factory is dbkit.tuple_set
         assert pool.logger is dbkit.null_logger
@@ -98,7 +98,7 @@ def test_setting_propagation():
     finally:
         pool.finalise()
 
-    pool = dbkit.Pool(fakedb, 1, fakedb.INVALID_CURSOR)
+    pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
     try:
         assert pool.default_factory is dbkit.tuple_set
         assert pool.logger is dbkit.null_logger
