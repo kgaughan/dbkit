@@ -20,13 +20,11 @@ class Connection(object):
     A fake connection.
     """
 
-    __slots__ = ['database', 'session', 'valid', 'cursors', 'executed']
-
     def __init__(self, database):
         super(Connection, self).__init__()
         self.database = database
         self.session = []
-        self.cursors = 0
+        self.cursors = set()
         self.executed = 0
         if database == INVALID_DB:
             self.valid = False
@@ -34,6 +32,11 @@ class Connection(object):
         self.valid = True
 
     def close(self):
+        if not self.valid:
+            raise ProgrammingError("Cannot close a closed connection.")
+        self.valid = False
+        for cursor in cursors:
+            cursor.close()
         self.session.append('close')
         if self.database == INVALID_DB:
             raise OperationalError()
@@ -64,7 +67,7 @@ class Cursor(object):
         if connection.database == INVALID_CURSOR:
             self.valid = False
             raise OperationalError()
-        connection.cursors += 1
+        connection.cursors.add(self)
         self.valid = True
         self.rowcount = -1
 
@@ -72,7 +75,7 @@ class Cursor(object):
         self.connection.session.append('cursor-close')
         if not self.valid:
             raise InterfaceError()
-        self.connection.cursors -= 1
+        self.connection.cursors.remove(self)
         self.valid = False
 
     def execute(self, stmt, args=()):
