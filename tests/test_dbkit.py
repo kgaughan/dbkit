@@ -55,7 +55,7 @@ def test_bad_connect():
     try:
         with dbkit.connect(sqlite3, '/nonexistent.db') as ctx:
             # Wouldn't do this in real code as the mediator is private.
-            with ctx._mdr:
+            with ctx.mdr:
                 pass
         assert False, "Should not have been able to open database."
     except sqlite3.OperationalError:
@@ -74,7 +74,7 @@ def test_context():
         assert len(ctx.stack) == 1
 
         assert dbkit.Context.current(with_exception=False) is ctx
-        assert ctx._mdr is not None
+        assert ctx.mdr is not None
         assert ctx.logger is not None
     ctx.close()
     try:
@@ -82,7 +82,7 @@ def test_context():
         assert False, "Should not have been able to access context."
     except:
         pass
-    assert ctx._mdr is None
+    assert ctx.mdr is None
     assert ctx.logger is None
     assert len(ctx.stack) == 0
 
@@ -177,18 +177,18 @@ def test_unpooled_disconnect():
         with ctx:
             try:
                 with dbkit.transaction():
-                    assert ctx._mdr.depth == 1
-                    assert ctx._mdr.conn is not None
+                    assert ctx.mdr.depth == 1
+                    assert ctx.mdr.conn is not None
                     assert dbkit.query_value(GET_COUNTER, ('foo',)) == 42
                     raise ctx.OperationalError("Simulating disconnect")
             except:
-                assert ctx._mdr.depth == 0
-                assert ctx._mdr.conn is None
+                assert ctx.mdr.depth == 0
+                assert ctx.mdr.conn is None
                 raise
         assert False, "Should've raised OperationalError"
     except ctx.OperationalError, exc:
-        assert ctx._mdr.depth == 0
-        assert ctx._mdr.conn is None
+        assert ctx.mdr.depth == 0
+        assert ctx.mdr.conn is None
         assert exc.message == "Simulating disconnect"
 
     # Test reconnect. As we're running this all against an in-memory DB,
@@ -196,7 +196,7 @@ def test_unpooled_disconnect():
     # do is query the list of tables, which will be empty.
     with ctx:
         assert len(list(dbkit.query_column(LIST_TABLES))) == 0
-        assert ctx._mdr.conn is not None
+        assert ctx.mdr.conn is not None
 
     ctx.close()
 
@@ -236,7 +236,7 @@ def test_procs():
         dbkit.query_proc_row('query_proc_row')
         dbkit.query_proc_value('query_proc_value')
         list(dbkit.query_proc_column('query_proc_column'))
-        conn = ctx._mdr.conn
+        conn = ctx.mdr.conn
     assert conn.executed == 4
     assert conn.session == [
         'cursor', 'proc:execute_proc', 'cursor-close',

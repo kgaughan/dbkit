@@ -19,7 +19,7 @@ def test_check_pool():
 def test_lazy_connect():
     assert len(POOL._pool) == 0
     with POOL.connect() as ctx:
-        assert isinstance(ctx._mdr, dbkit.PooledConnectionMediator)
+        assert isinstance(ctx.mdr, dbkit.PooledConnectionMediator)
         assert POOL._allocated == 0
         assert len(POOL._pool) == 0
     assert POOL._allocated == 0

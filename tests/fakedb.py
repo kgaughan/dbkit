@@ -5,6 +5,7 @@ A fake DB-API 2 driver.
 # DB names used to trigger certain behaviours.
 INVALID_DB = 'invalid-db'
 INVALID_CURSOR = 'invalid-cursor'
+HAPPY_OUT = 'happy-out'
 
 apilevel = '2.0'
 threadsafety = 2
@@ -35,7 +36,7 @@ class Connection(object):
         if not self.valid:
             raise ProgrammingError("Cannot close a closed connection.")
         self.valid = False
-        for cursor in cursors:
+        for cursor in self.cursors:
             cursor.close()
         self.session.append('close')
         if self.database == INVALID_DB:
@@ -59,14 +60,12 @@ class Cursor(object):
     A fake cursor.
     """
 
-    __slots__ = ['connection', 'valid', 'result', 'rowcount']
-
     def __init__(self, connection):
         self.connection = connection
         self.result = None
         if connection.database == INVALID_CURSOR:
             self.valid = False
-            raise OperationalError()
+            raise OperationalError("You've tripped INVALID_CURSOR!")
         connection.cursors.add(self)
         self.valid = True
         self.rowcount = -1
@@ -74,7 +73,7 @@ class Cursor(object):
     def close(self):
         self.connection.session.append('cursor-close')
         if not self.valid:
-            raise InterfaceError()
+            raise InterfaceError("Cursor is closed")
         self.connection.cursors.remove(self)
         self.valid = False
 
@@ -103,7 +102,7 @@ class Cursor(object):
 
     def fetchone(self):
         if not self.valid:
-            raise InterfaceError()
+            raise InterfaceError("Cursor is closed")
         result = self.result
         self.result = None
         return result

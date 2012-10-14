@@ -94,7 +94,7 @@ class Context(object):
     """A database connection context."""
 
     __slots__ = (
-        '_mdr', '_depth', 'logger', 'default_factory',
+        'mdr', '_depth', 'logger', 'default_factory',
         'last_row_count', 'last_row_id') + _EXCEPTIONS
     stack = _ContextStack()
 
@@ -103,7 +103,7 @@ class Context(object):
         Initialise a context with a given driver module and connection.
         """
         super(Context, self).__init__()
-        self._mdr = mdr
+        self.mdr = mdr
         self._depth = 0
         self.logger = null_logger
         self.default_factory = tuple_set
@@ -140,12 +140,12 @@ class Context(object):
         # The idea here is to fake the nesting of transactions. Only when
         # we've gotten back to the topmost transaction context do we actually
         # commit or rollback.
-        with self._mdr:
+        with self.mdr:
             try:
                 self._depth += 1
                 yield self
                 self._depth -= 1
-            except self._mdr.OperationalError:
+            except self.mdr.OperationalError:
                 # We've lost the connection, so there's no sense in
                 # attempting to roll back back the transaction.
                 self._depth -= 1
@@ -153,29 +153,28 @@ class Context(object):
             except:
                 self._depth -= 1
                 if self._depth == 0:
-                    self._mdr.rollback()
+                    self.mdr.rollback()
                 raise
             if self._depth == 0:
-                self._mdr.commit()
+                self.mdr.commit()
 
     @contextlib.contextmanager
     def cursor(self):
         """Get a cursor for the current connection. For internal use only."""
-        with self._mdr:
-            logger.debug("Creating cursor")
-            cursor = self._mdr.cursor()
-            try:
-                logger.debug("Yielding cursor")
-                yield cursor
-                if cursor.rowcount != -1:
-                    self.last_row_count = cursor.rowcount
-                self.last_row_id = getattr(cursor, 'lastrowid', None)
-            except:
-                self.last_row_count = None
-                self.last_row_id = None
-                logger.debug("Closing cursor")
-                _safe_close(cursor)
-                raise
+        logger.debug("Creating cursor")
+        cursor = self.mdr.cursor()
+        try:
+            logger.debug("Yielding cursor")
+            yield cursor
+            if cursor.rowcount != -1:
+                self.last_row_count = cursor.rowcount
+            self.last_row_id = getattr(cursor, 'lastrowid', None)
+        except:
+            self.last_row_count = None
+            self.last_row_id = None
+            logger.debug("Closing cursor")
+            _safe_close(cursor)
+            raise
 
     def execute(self, stmt, args):
         """Execute a statement, returning a cursor. For internal use only."""
@@ -205,9 +204,9 @@ class Context(object):
         for exc in _EXCEPTIONS:
             setattr(self, exc, None)
         try:
-            self._mdr.close()
+            self.mdr.close()
         finally:
-            self._mdr = None
+            self.mdr = None
 
 
 # pylint: disable-msg=R0903
@@ -331,6 +330,7 @@ class PooledConnectionMediator(ConnectionMediatorBase):
                 self.conn = None
 
     def cursor(self):
+        cursor = None
         try:
             cursor = self.conn.cursor()
             cursor.execute('SELECT 1')
@@ -620,9 +620,11 @@ def last_row_id():
 
 def execute(stmt, args=()):
     """Execute an SQL statement. Returns the number of affected rows."""
-    cursor = Context.current().execute(stmt, args)
-    row_count = cursor.rowcount
-    _safe_close(cursor)
+    ctx = Context.current()
+    with ctx.mdr:
+        cursor = ctx.execute(stmt, args)
+        row_count = cursor.rowcount
+        _safe_close(cursor)
     return row_count
 
 
@@ -630,7 +632,8 @@ def query(stmt, args=(), factory=None):
     """Execute a query. This returns an iterator of the result set."""
     ctx = Context.current()
     factory = ctx.default_factory if factory is None else factory
-    return factory(ctx.execute(stmt, args))
+    with ctx.mdr:
+        return factory(ctx.execute(stmt, args), ctx.mdr)
 
 
 def query_row(stmt, args=(), factory=None):
@@ -658,9 +661,11 @@ def query_column(stmt, args=()):
 
 def execute_proc(procname, args=()):
     """Execute a stored procedure. Returns the number of affected rows."""
-    cursor = Context.current().execute_proc(procname, args)
-    row_count = cursor.rowcount
-    _safe_close(cursor)
+    ctx = Context.current()
+    with ctx.mdr:
+        cursor = ctx.execute_proc(procname, args)
+        row_count = cursor.rowcount
+        _safe_close(cursor)
     return row_count
 
 
@@ -670,7 +675,8 @@ def query_proc(procname, args=(), factory=None):
     """
     ctx = Context.current()
     factory = ctx.default_factory if factory is None else factory
-    return factory(ctx.execute_proc(procname, args))
+    with ctx.mdr:
+        return factory(ctx.execute_proc(procname, args), ctx.mdr)
 
 
 def query_proc_row(procname, args=(), factory=None):
@@ -701,41 +707,44 @@ def query_proc_column(procname, args=()):
     return query_proc(procname, args, column_set)
 
 
-def dict_set(cursor):
+def dict_set(cursor, mdr):
     """Iterator over a statement's results as a dict."""
     columns = [col[0] for col in cursor.description]
-    try:
-        while True:
-            row = cursor.fetchone()
-            if row is None:
-                break
-            yield AttrDict(zip(columns, row))
-    finally:
-        _safe_close(cursor)
+    with mdr:
+        try:
+            while True:
+                row = cursor.fetchone()
+                if row is None:
+                    break
+                yield AttrDict(zip(columns, row))
+        finally:
+            _safe_close(cursor)
 
 
-def tuple_set(cursor):
+def tuple_set(cursor, mdr):
     """Iterator over a statement's results where each row is a tuple."""
-    try:
-        while True:
-            row = cursor.fetchone()
-            if row is None:
-                break
-            yield row
-    finally:
-        _safe_close(cursor)
+    with mdr:
+        try:
+            while True:
+                row = cursor.fetchone()
+                if row is None:
+                    break
+                yield row
+        finally:
+            _safe_close(cursor)
 
 
-def column_set(cursor):
+def column_set(cursor, mdr):
     """Iterator over the first column of a statement's results."""
-    try:
-        while True:
-            row = cursor.fetchone()
-            if row is None:
-                break
-            yield row[0]
-    finally:
-        _safe_close(cursor)
+    with mdr:
+        try:
+            while True:
+                row = cursor.fetchone()
+                if row is None:
+                    break
+                yield row[0]
+        finally:
+            _safe_close(cursor)
 
 
 class AttrDict(dict):
