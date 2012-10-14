@@ -108,8 +108,6 @@ can change this by assigning another, such as :py:func:`dbkit.dict_set` to
 Some query functions allow you to specify the result generator to be used
 for the result, which is passed in using the `factory` parameter.
 
-.. autofunction:: dbkit.column_set
-
 .. autofunction:: dbkit.dict_set
 
 .. autofunction:: dbkit.tuple_set

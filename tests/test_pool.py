@@ -90,17 +90,17 @@ def test_pool_contention():
 def test_setting_propagation():
     pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
     try:
-        assert pool.default_factory is dbkit.tuple_set
+        assert pool.default_factory is dbkit.TupleFactory
         assert pool.logger is dbkit.null_logger
         with pool.connect() as ctx:
-            assert ctx.default_factory is dbkit.tuple_set
+            assert ctx.default_factory is dbkit.TupleFactory
             assert ctx.logger is dbkit.null_logger
     finally:
         pool.finalise()
 
     pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
     try:
-        assert pool.default_factory is dbkit.tuple_set
+        assert pool.default_factory is dbkit.TupleFactory
         assert pool.logger is dbkit.null_logger
         pool.default_factory = None
         pool.logger = None

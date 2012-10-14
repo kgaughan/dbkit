@@ -90,11 +90,11 @@ def test_context():
 def test_create_table():
     with dbkit.connect(sqlite3, ':memory:'):
         result = dbkit.query_column(LIST_TABLES)
-        assert isinstance(result, types.GeneratorType)
+        assert hasattr(result, '__iter__')
         assert len(list(result)) == 0
         dbkit.execute(SCHEMA)
         result = dbkit.query_column(LIST_TABLES)
-        assert isinstance(result, types.GeneratorType)
+        assert hasattr(result, '__iter__')
         assert list(result) == [u'counters']
 
 

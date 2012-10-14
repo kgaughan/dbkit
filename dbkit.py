@@ -26,11 +26,11 @@ __all__ = (
     'execute', 'query_row', 'query_value', 'query_column',
     'execute_proc', 'query_proc_row',
     'query_proc_value', 'query_proc_column',
-    'dict_set', 'tuple_set',
+    'DictFactory', 'TupleFactory',
     'unindent_statement', 'make_file_object_logger',
     'null_logger', 'stderr_logger')
 
-__version__ = '0.1.4'
+__version__ = '0.2.0'
 __author__ = 'Keith Gaughan'
 __email__ = 'k@stereochro.me'
 
@@ -106,7 +106,7 @@ class Context(object):
         self.mdr = mdr
         self._depth = 0
         self.logger = null_logger
-        self.default_factory = tuple_set
+        self.default_factory = TupleFactory
         self.last_row_count = None
         self.last_row_id = None
         # Copy driver module's exception references.
@@ -374,7 +374,7 @@ class PoolBase(object):
         super(PoolBase, self).__init__()
         self.module = module
         self.logger = null_logger
-        self.default_factory = tuple_set
+        self.default_factory = TupleFactory
         self._connect = _make_connect(module, args, kwargs)
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
@@ -496,6 +496,34 @@ class Pool(PoolBase):
         return self._max_conns + 1
 
 
+class DummyPool(PoolBase):
+    """
+    A dummy pool that creates a new connection on each acquire and closes
+    it upon release.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, module, *args, **kwargs):
+        super(DummyPool, self).__init__(module, 1, args, kwargs)
+
+    def acquire(self):
+        return self._connect()
+
+    def release(self, conn):
+        _safe_close(conn)
+
+    def discard(self):
+        pass
+
+    def finalise(self):
+        pass
+
+    def get_max_reattempts(self):
+        # If we can't connect first time, we can't connect at all.
+        return 0
+
+
 def _make_connect(module, args, kwargs):
     """
     Returns a function capable of making connections with a particular
@@ -526,7 +554,9 @@ def create_pool(module, max_conns, *args, **kwargs):
         raise ValueError("Minimum number of connections is 1.")
     if module.threadsafety >= 2:
         return Pool(module, max_conns, *args, **kwargs)
-    raise ValueError("Bad threadsafety level: %d", module.threadsafety)
+    if module.threadsafety >= 1:
+        return DummyPool(module, *args, **kwargs)
+    raise ValueError("Bad threadsafety level: %d" % module.threadsafety)
 
 
 def context():
@@ -649,14 +679,14 @@ def query_value(stmt, args=(), default=None):
     result set. If the query returns no result set, a default value is
     returned, which is `None` by default.
     """
-    for row in query(stmt, args, tuple_set):
+    for row in query(stmt, args, TupleFactory):
         return row[0]
     return default
 
 
 def query_column(stmt, args=()):
     """Execute a query, returning an iterable of the first column."""
-    return query(stmt, args, column_set)
+    return query(stmt, args, ColumnFactory)
 
 
 def execute_proc(procname, args=()):
@@ -695,7 +725,7 @@ def query_proc_value(procname, args=(), default=None):
     of the result set. If it returns no result set, a default value is
     returned, which is `None` by default.
     """
-    for row in query_proc(procname, args, tuple_set):
+    for row in query_proc(procname, args, TupleFactory):
         return row[0]
     return default
 
@@ -704,47 +734,102 @@ def query_proc_column(procname, args=()):
     """
     Execute a stored procedure, returning an iterable of the first column.
     """
-    return query_proc(procname, args, column_set)
+    return query_proc(procname, args, ColumnFactory)
 
 
-def dict_set(cursor, mdr):
+class FactoryBase(object):
+    """Base class for row factories."""
+
+    __slots__ = ('cursor', 'mdr')
+
+    def __init__(self, cursor, mdr):
+        super(FactoryBase, self).__init__()
+        self.cursor = cursor
+        self.mdr = mdr
+        self.mdr.__enter__()
+
+    def __del__(self):
+        self.close()
+
+    # pylint: disable=W0702,W0142
+    def close(self):
+        """Release all resources associated with this factory."""
+        if self.mdr is None:
+            return
+        exc = (None, None, None)
+        try:
+            self.cursor.close()
+        except:
+            exc = sys.exc_info()
+        try:
+            if self.mdr.__exit__(*exc):
+                exc = (None, None, None)
+        except:
+            exc = sys.exc_info()
+        self.mdr = None
+        self.cursor = None
+        if exc != (None, None, None):
+            raise exc[0], exc[1], exc[2]
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """Iterator method to return next row()."""
+        try:
+            return self.fetch()
+        except:
+            self.close()
+            raise
+
+    def fetch(self):
+        """Fetches the next row."""
+        raise NotImplementedError()
+
+
+class DictFactory(FactoryBase):
     """Iterator over a statement's results as a dict."""
-    columns = [col[0] for col in cursor.description]
-    with mdr:
-        try:
-            while True:
-                row = cursor.fetchone()
-                if row is None:
-                    break
-                yield AttrDict(zip(columns, row))
-        finally:
-            _safe_close(cursor)
+
+    __slots__ = ('columns',)
+
+    def __init__(self, cursor, mdr):
+        super(DictFactory, self).__init__(cursor, mdr)
+        self.columns = [col[0] for col in cursor.description]
+
+    def fetch(self):
+        row = self.cursor.fetchone()
+        if row is None:
+            raise StopIteration
+        return AttrDict(zip(self.columns, row))
 
 
-def tuple_set(cursor, mdr):
+class TupleFactory(FactoryBase):
     """Iterator over a statement's results where each row is a tuple."""
-    with mdr:
-        try:
-            while True:
-                row = cursor.fetchone()
-                if row is None:
-                    break
-                yield row
-        finally:
-            _safe_close(cursor)
+
+    __slots__ = ()
+
+    def fetch(self):
+        row = self.cursor.fetchone()
+        if row is None:
+            raise StopIteration
+        return row
 
 
-def column_set(cursor, mdr):
+class ColumnFactory(FactoryBase):
     """Iterator over the first column of a statement's results."""
-    with mdr:
-        try:
-            while True:
-                row = cursor.fetchone()
-                if row is None:
-                    break
-                yield row[0]
-        finally:
-            _safe_close(cursor)
+
+    __slots__ = ()
+
+    def fetch(self):
+        row = self.cursor.fetchone()
+        if row is None:
+            raise StopIteration
+        return row[0]
+
+
+# For backwards compatibility
+dict_set = DictFactory  # pylint: disable=C0103
+tuple_set = TupleFactory  # pylint: disable=C0103
 
 
 class AttrDict(dict):
