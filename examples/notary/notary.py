@@ -7,7 +7,7 @@ database driver support for connection pooling.
 .. note::
    This doesn't currently work fully due to dbkit's type 1 driver support
    being broken and thus removed. It will work just fine with type 2
-   drivers and above such as `psycopg2` and `MySQLdb`.
+   drivers and above such as `psycopg2`.
 """
 
 import web
