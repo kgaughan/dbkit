@@ -12,7 +12,6 @@ import collections
 import contextlib
 import datetime
 import functools
-import logging
 import pprint
 import sys
 import threading
@@ -47,10 +46,6 @@ _EXCEPTIONS = (
     'InternalError',
     'ProgrammingError',
     'NotSupportedError')
-
-
-# Use for in-library logging (as opposed to tracing statement logging).
-logger = logging.getLogger(__name__)
 
 
 class NoContext(StandardError):
@@ -133,10 +128,6 @@ class Context(object):
         Sets up a context where all the statements within it are ran within
         a single database transaction. For internal use only.
         """
-        if self._depth == 0:
-            logger.debug("Starting transaction")
-        else:
-            logger.debug("Starting fake subtransaction")
         # The idea here is to fake the nesting of transactions. Only when
         # we've gotten back to the topmost transaction context do we actually
         # commit or rollback.
@@ -161,10 +152,8 @@ class Context(object):
     @contextlib.contextmanager
     def cursor(self):
         """Get a cursor for the current connection. For internal use only."""
-        logger.debug("Creating cursor")
         cursor = self.mdr.cursor()
         try:
-            logger.debug("Yielding cursor")
             yield cursor
             if cursor.rowcount != -1:
                 self.last_row_count = cursor.rowcount
@@ -172,7 +161,6 @@ class Context(object):
         except:
             self.last_row_count = None
             self.last_row_id = None
-            logger.debug("Closing cursor")
             _safe_close(cursor)
             raise
 
@@ -180,9 +168,7 @@ class Context(object):
         """Execute a statement, returning a cursor. For internal use only."""
         self.logger(stmt, args)
         with self.cursor() as cursor:
-            logger.debug("Executing statement")
             cursor.execute(stmt, args)
-            logger.debug("Statement successfully executed")
             return cursor
 
     def execute_proc(self, procname, args):
@@ -192,14 +178,11 @@ class Context(object):
         """
         self.logger(procname, args)
         with self.cursor() as cursor:
-            logger.debug("Executing stored procedure")
             cursor.callproc(procname, args)
-            logger.debug("Stored procedure successfully executed")
             return cursor
 
     def close(self):
         """Close the connection this context wraps."""
-        logger.debug("Closing context")
         self.logger = None
         for exc in _EXCEPTIONS:
             setattr(self, exc, None)
@@ -252,15 +235,11 @@ class ConnectionMediatorBase(object):
 
     def rollback(self):
         """Rollback the current transaction."""
-        logger.debug("Rolling back transaction")
         self.conn.rollback()
-        logger.debug("Transaction rolled back")
 
     def commit(self):
         """Commit the current transaction."""
-        logger.debug("Committing transaction")
         self.conn.commit()
-        logger.debug("Transaction committed")
 
 
 class SingleConnectionMediator(ConnectionMediatorBase):
