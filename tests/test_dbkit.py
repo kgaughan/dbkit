@@ -201,14 +201,6 @@ def test_unpooled_disconnect():
     ctx.close()
 
 
-def test_unindent_statement():
-    assert dbkit.unindent_statement("foo\nbar") == "foo\nbar"
-    assert dbkit.unindent_statement(" foo\n bar") == "foo\nbar"
-    assert dbkit.unindent_statement("  foo\n  bar") == "foo\nbar"
-    assert dbkit.unindent_statement(" foo\n  bar") == "foo\n bar"
-    assert dbkit.unindent_statement("  foo\n bar") == "foo\nar"
-
-
 def test_make_file_object_logger():
     captured = StringIO.StringIO()
     logger = dbkit.make_file_object_logger(captured)

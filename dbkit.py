@@ -8,12 +8,14 @@ database drivers.
 """
 
 from __future__ import with_statement
+
 import collections
 import contextlib
 import datetime
 import functools
 import pprint
 import sys
+import textwrap
 import threading
 
 
@@ -26,10 +28,9 @@ __all__ = (
     'execute_proc', 'query_proc_row',
     'query_proc_value', 'query_proc_column',
     'DictFactory', 'TupleFactory',
-    'unindent_statement', 'make_file_object_logger',
-    'null_logger', 'stderr_logger')
+    'make_file_object_logger', 'null_logger', 'stderr_logger')
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'Keith Gaughan'
 __email__ = 'k@stereochro.me'
 
@@ -844,23 +845,6 @@ def _safe_close(obj):
         pass
 
 
-def unindent_statement(stmt):
-    """
-    Strips leading whitespace from a query based on the indentation
-    of the first non-empty line.
-
-    This is for use in logging functions for cleaning up query formatting.
-    """
-    lines = stmt.split("\n")
-    prefix = 0
-    for line in lines:
-        stripped = line.lstrip()
-        if stripped != '':
-            prefix = len(line) - len(stripped)
-            break
-    return "\n".join(line[prefix:] for line in lines)
-
-
 def null_logger(_stmt, _args):
     """A logger that discards everything sent to it."""
     pass
@@ -872,7 +856,7 @@ def make_file_object_logger(fh):
         """A logger that logs everything sent to a file object."""
         now = datetime.datetime.now()
         print >> fh, "Executing (%s):" % now.isoformat()
-        print >> fh, unindent_statement(stmt)
+        print >> fh, textwrap.dedent(stmt)
         print >> fh, "Arguments:"
         pprint.pprint(args, fh)
     return logger_func
