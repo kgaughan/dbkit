@@ -10,12 +10,13 @@ database driver support for connection pooling.
    drivers and above such as `psycopg2`.
 """
 
-import web
-import sqlite3
-import dbkit
-import unicodedata
 import re
+import sqlite3
+import unicodedata
+
 import creole
+import dbkit
+import web
 
 
 urls = (
