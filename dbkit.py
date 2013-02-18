@@ -313,8 +313,7 @@ class PooledConnectionMediator(ConnectionMediatorBase):
         cursor = None
         try:
             cursor = self.conn.cursor()
-            cursor.execute('SELECT 1')
-            cursor.fetchall()
+            _ping(cursor)
         except (self.InterfaceError, self.DatabaseError):
             # Go through each of the remaining connections
             attempts_left = self.pool.get_max_reattempts()
@@ -323,8 +322,7 @@ class PooledConnectionMediator(ConnectionMediatorBase):
                 self.conn = self.pool.acquire()
                 try:
                     cursor = self.conn.cursor()
-                    cursor.execute('SELECT 1')
-                    cursor.fetchall()
+                    _ping(cursor)
                     break
                 except (self.InterfaceError, self.DatabaseError):
                     if attempts_left == 1:
@@ -834,6 +832,12 @@ class AttrDict(dict):
 
     def __repr__(self):
         return '<AttrDict ' + dict.__repr__(self) + '>'
+
+
+def _ping(cursor):
+    """Ping a connection (given a cursor) in a cross-platform manner."""
+    cursor.execute('SELECT 1')
+    cursor.fetchall()
 
 
 def _safe_close(obj):
