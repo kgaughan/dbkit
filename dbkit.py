@@ -49,11 +49,11 @@ _EXCEPTIONS = (
     'NotSupportedError')
 
 
-class NoContext(StandardError):
+class NoContext(Exception):
     """You are attempting to use dbkit outside of a database context."""
 
 
-class NotSupported(StandardError):
+class NotSupported(Exception):
     """You are attempting something unsupported."""
 
 
