@@ -236,4 +236,33 @@ def test_procs():
         'cursor', 'proc:query_proc_value', 'cursor-close',
         'cursor', 'proc:query_proc_column', 'cursor-close']
 
+
+def test_to_dict_nothing():
+    result = dbkit.to_dict('foo', [])
+    assert isinstance(result, dict) and len(result) == 0
+
+
+def test_to_dict_bad_key():
+    try:
+        dbkit.to_dict('foo', [{'bar': 'fred', 'baz': 'barney'}])
+        assert False, 'Expected KeyError'
+    except KeyError:
+        pass
+
+
+def test_to_dict_happy_path():
+    row = {'bar': 'fred', 'baz': 'barney'}
+    result = dbkit.to_dict('baz', [row])
+    assert len(result) == 1
+    assert 'barney' in result
+    assert result['barney'] is row
+
+
+def test_to_dict_sequence():
+    row = ('fred', 'barney')
+    result = dbkit.to_dict(1, [row])
+    assert len(result) == 1
+    assert 'barney' in result
+    assert result['barney'] is row
+
 # vim:set et ai:

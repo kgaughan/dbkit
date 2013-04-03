@@ -846,6 +846,13 @@ def _safe_close(obj):
         pass
 
 
+def to_dict(key, resultset):
+    """
+    Convert a resultset into a dictionary keyed off of one of its columns.
+    """
+    return dict((row[key], row) for row in resultset)
+
+
 def null_logger(_stmt, _args):
     """A logger that discards everything sent to it."""
     pass
