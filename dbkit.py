@@ -268,14 +268,11 @@ class SingleConnectionMediator(ConnectionMediatorBase):
     def cursor(self):
         try:
             cursor = self.conn.cursor()
-            cursor.execute('SELECT 1')
-            cursor.fetchall()
         except (self.InterfaceError, self.DatabaseError):
             del self.conn
             self.conn = self.connect()
             cursor = self.conn.cursor()
-            cursor.execute('SELECT 1')
-            cursor.fetchall()
+        _ping(cursor)
         return cursor
 
     def close(self):
