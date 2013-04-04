@@ -1,4 +1,5 @@
 from __future__ import with_statement
+
 import sqlite3
 import StringIO
 import types
@@ -264,5 +265,69 @@ def test_to_dict_sequence():
     assert len(result) == 1
     assert 'barney' in result
     assert result['barney'] is row
+
+
+def test_make_placeholders():
+    with dbkit.connect(fakedb, 'db') as ctx:
+        try:
+            dbkit.make_placeholders([])
+            assert False, "Expected ValueError"
+        except ValueError:
+            pass
+
+    with utils.set_temporarily(fakedb, 'paramstyle', 'qmark'):
+        with dbkit.connect(fakedb, 'db') as ctx:
+            assert dbkit.make_placeholders([0]) == '?'
+            assert dbkit.make_placeholders([0, 1]) == '?, ?'
+            assert dbkit.make_placeholders([0, 1, 4]) == '?, ?, ?'
+
+    for style in ('format', 'pyformat'):
+        with utils.set_temporarily(fakedb, 'paramstyle', style):
+            with dbkit.connect(fakedb, 'db') as ctx:
+                assert dbkit.make_placeholders([0]) == '%s'
+                assert dbkit.make_placeholders([0, 2]) == '%s, %s'
+                assert dbkit.make_placeholders([0, 2, 7]) == '%s, %s, %s'
+
+    with utils.set_temporarily(fakedb, 'paramstyle', 'numeric'):
+        with dbkit.connect(fakedb, 'db') as ctx:
+            assert dbkit.make_placeholders([0], 7) == ':7'
+            assert dbkit.make_placeholders([0, 1], 7) == ':7, :8'
+            assert dbkit.make_placeholders([0, 1, 4], 7) == ':7, :8, :9'
+
+    def sort_fields(fields):
+        """Helper to ensure named fields are sorted for the test."""
+        return ', '.join(sorted(field.lstrip() for field in fields.split(',')))
+
+    def make_sorted(seq):
+        """Wrap repetitive code for the next few checks."""
+        return sort_fields(dbkit.make_placeholders(seq))
+
+    with utils.set_temporarily(fakedb, 'paramstyle', 'pyformat'):
+        with dbkit.connect(fakedb, 'db') as ctx:
+            assert make_sorted({'foo': None}) == '%(foo)s'
+            assert make_sorted({'foo': None, 'bar': None}) == '%(bar)s, %(foo)s'
+            assert make_sorted({'foo': None, 'bar': None, 'baz': None}) == '%(bar)s, %(baz)s, %(foo)s'
+
+    with utils.set_temporarily(fakedb, 'paramstyle', 'named'):
+        with dbkit.connect(fakedb, 'db') as ctx:
+            assert make_sorted({'foo': None}) == ':foo'
+            assert make_sorted({'foo': None, 'bar': None}) == ':bar, :foo'
+            assert make_sorted({'foo': None, 'bar': None, 'baz': None}) == ':bar, :baz, :foo'
+
+    with utils.set_temporarily(fakedb, 'paramstyle', 'qmark'):
+        with dbkit.connect(fakedb, 'db') as ctx:
+            try:
+                print dbkit.make_placeholders({'foo': None})
+                assert False, "Should've got 'NotSupported' exception."
+            except dbkit.NotSupported, exc:
+                assert exc.message == "Param style 'qmark' does not support sequence type 'dict'"
+
+    with utils.set_temporarily(fakedb, 'paramstyle', 'named'):
+        with dbkit.connect(fakedb, 'db') as ctx:
+            try:
+                print dbkit.make_placeholders(['foo'])
+                assert False, "Should've got 'NotSupported' exception."
+            except dbkit.NotSupported, exc:
+                assert exc.message == "Param style 'named' does not support sequence type 'list'"
 
 # vim:set et ai:

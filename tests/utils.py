@@ -2,6 +2,7 @@
 Utility functions used by the tests.
 """
 
+import contextlib
 import threading
 
 
@@ -20,3 +21,14 @@ def spawn(targets):
         threads.append(thread)
     for thread in threads:
         thread.join()
+
+
+@contextlib.contextmanager
+def set_temporarily(obj, attr, value):
+    """Temporarily change the value of an object's attribute."""
+    try:
+        original = getattr(obj, attr)
+        setattr(obj, attr, value)
+        yield
+    finally:
+        setattr(obj, attr, original)

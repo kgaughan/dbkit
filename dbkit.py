@@ -13,6 +13,7 @@ import collections
 import contextlib
 import datetime
 import functools
+import itertools
 import pprint
 import sys
 import textwrap
@@ -90,7 +91,7 @@ class Context(object):
     """A database connection context."""
 
     __slots__ = (
-        'mdr', '_depth', 'logger', 'default_factory',
+        'mdr', '_depth', 'logger', 'default_factory', 'param_style',
         'last_row_count', 'last_row_id') + _EXCEPTIONS
     stack = _ContextStack()
 
@@ -105,6 +106,7 @@ class Context(object):
         self.default_factory = TupleFactory
         self.last_row_count = None
         self.last_row_id = None
+        self.param_style = module.paramstyle
         # Copy driver module's exception references.
         for exc in _EXCEPTIONS:
             setattr(self, exc, getattr(module, exc))
@@ -851,6 +853,32 @@ def to_dict(key, resultset):
     Convert a resultset into a dictionary keyed off of one of its columns.
     """
     return dict((row[key], row) for row in resultset)
+
+
+def make_placeholders(seq, start=1):
+    """
+    Generate placeholders for the given sequence.
+    """
+    if len(seq) == 0:
+        raise ValueError('Sequence must have at least one element.')
+    param_style = Context.current().param_style
+    placeholders = None
+    if isinstance(seq, dict):
+        if param_style in ('named', 'pyformat'):
+            template = ':%s' if param_style == 'named' else '%%(%s)s'
+            placeholders = (template % key for key in seq.iterkeys())
+    elif isinstance(seq, (list, tuple)):
+        if param_style == 'numeric':
+            placeholders = (':%d' % i for i in xrange(start, start + len(seq)))
+        elif param_style in ('qmark', 'format', 'pyformat'):
+            placeholders = itertools.repeat(
+                '?' if param_style == 'qmark' else '%s',
+                times=len(seq))
+    if placeholders is None:
+        raise NotSupported(
+            "Param style '%s' does not support sequence type '%s'" % (
+                param_style, seq.__class__.__name__))
+    return ', '.join(placeholders)
 
 
 def null_logger(_stmt, _args):
