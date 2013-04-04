@@ -873,7 +873,7 @@ def make_placeholders(seq, start=1):
         elif param_style in ('qmark', 'format', 'pyformat'):
             placeholders = itertools.repeat(
                 '?' if param_style == 'qmark' else '%s',
-                times=len(seq))
+                len(seq))
     if placeholders is None:
         raise NotSupported(
             "Param style '%s' does not support sequence type '%s'" % (
