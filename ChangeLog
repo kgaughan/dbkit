@@ -4,6 +4,31 @@
 Change history
 ==============
 
+.. _version-0.2.2:
+
+0.2.2
+=====
+
+* Scrap `unindent_statement()`.
+* Derive all dbkit exceptions from `Exception`.
+* Clean up connection pinging code.
+* Add `make_placeholders()` for generating statement placeholders safely.
+* Add `to_dict()` for converting resultsets to dicts mapped off of a
+  particular field.
+
+.. _version-0.2.0:
+
+0.2.0
+=====
+:Release date: 2012-10-16
+:By: Keith Gaughan
+
+* Add `last_row_id()`.
+* Pools now can have custom mediators.
+* Cursors are now tracked.
+* Pooled connections are no longer closed prematurely.
+* Row factories are now usable outside of context safely.
+
 .. _version-0.1.4:
 
 0.1.4
