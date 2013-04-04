@@ -135,7 +135,9 @@ arguments that were passed with it.
 Utilities
 =========
 
-.. autofunction:: dbkit.unindent_statement
+.. autofunction:: dbkit.to_dict
+
+.. autofunction:: dbkit.make_placeholders
 
 
 Connection pools

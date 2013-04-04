@@ -31,7 +31,7 @@ __all__ = (
     'DictFactory', 'TupleFactory',
     'make_file_object_logger', 'null_logger', 'stderr_logger')
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 __author__ = 'Keith Gaughan'
 __email__ = 'k@stereochro.me'
 
