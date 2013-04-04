@@ -8,6 +8,8 @@ Change history
 
 0.2.2
 =====
+:Release date: 2013-04-04
+:By: Keith Gaughan
 
 * Scrap `unindent_statement()`.
 * Derive all dbkit exceptions from `Exception`.
