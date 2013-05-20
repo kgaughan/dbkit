@@ -1,70 +1,96 @@
-"""A counter management tool."""
+"""
+A counter management tool.
+"""
 
 from contextlib import closing
 from os import path
 import sqlite3
 import sys
 
-from dbkit import connect, transaction, \
-    execute, query, query_value, query_column
+from dbkit import (
+    connect,
+    execute,
+    query,
+    query_column,
+    query_value,
+    transactional,
+)
 
 
 def get_counter(counter):
-    """Get the value of a counter."""
+    """
+    Get the value of a counter.
+    """
     print query_value(
         'SELECT value FROM counters WHERE counter = ?',
         (counter,),
         default=0)
 
 
+@transactional
 def set_counter(counter, value):
-    """Set a counter."""
-    with transaction():
-        execute(
-            'REPLACE INTO counters (counter, value) VALUES (?, ?)',
-            (counter, value))
+    """
+    Set a counter.
+    """
+    execute(
+        'REPLACE INTO counters (counter, value) VALUES (?, ?)',
+        (counter, value))
 
 
+@transactional
 def increment_counter(counter, by):
-    """Modify the value of a counter by a certain amount."""
-    with transaction():
-        execute(
-            'UPDATE counters SET value = value + ? WHERE counter = ?',
-            (by, counter))
+    """
+    Modify the value of a counter by a certain amount.
+    """
+    execute(
+        'UPDATE counters SET value = value + ? WHERE counter = ?',
+        (by, counter))
 
 
+@transactional
 def delete_counter(counter):
-    """Delete a counter."""
-    with transaction():
-        execute(
-            'DELETE FROM counters WHERE counter = ?',
-            (counter,))
+    """
+    Delete a counter.
+    """
+    execute(
+        'DELETE FROM counters WHERE counter = ?',
+        (counter,))
 
 
 def list_counters():
-    """List the names of all the stored counters."""
+    """
+    List the names of all the stored counters.
+    """
     print "\n".join(query_column('SELECT counter FROM counters'))
 
 
 def dump_counters():
-    """Query the database for all counters and their values."""
+    """
+    Query the database for all counters and their values.
+    """
     return query('SELECT counter, value FROM counters')
 
 
 def print_counters_and_values():
-    """List all the counters and their values."""
+    """
+    List all the counters and their values.
+    """
     for counter, value in dump_counters():
         print "%s: %d" % (counter, value)
 
 
 def print_help(filename, table, dest=sys.stdout):
-    """Print help to the given destination file object."""
+    """
+    Print help to the given destination file object.
+    """
     cmds = '|'.join(sorted(table.keys()))
     print >> dest, "Syntax: %s %s [args]" % (path.basename(filename), cmds)
 
 
 def dispatch(table, args):
-    """Dispatches to a function based on the contents of `args`."""
+    """
+    Dispatches to a function based on the contents of `args`.
+    """
     # No arguments: print help.
     if len(args) == 1:
         print_help(args[0], table)

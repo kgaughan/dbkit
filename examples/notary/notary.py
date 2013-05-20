@@ -33,13 +33,17 @@ pool.default_factory = dbkit.dict_set
 
 
 def strip_accents(s):
-    """Strip accents to prepare for slugification."""
+    """
+    Strip accents to prepare for slugification.
+    """
     nfkd = unicodedata.normalize('NFKD', unicode(s))
     return u''.join(ch for ch in nfkd if not unicodedata.combining(ch))
 
 
 def slugify(s):
-    """Converts the given string to a URL slug."""
+    """
+    Converts the given string to a URL slug.
+    """
     s = strip_accents(s.replace("'", '').lower())
     return re.sub('[^a-z0-9]+', ' ', s).strip().replace(' ', '-')
 

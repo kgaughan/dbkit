@@ -29,7 +29,8 @@ __all__ = (
     'execute_proc', 'query_proc_row',
     'query_proc_value', 'query_proc_column',
     'DictFactory', 'TupleFactory',
-    'make_file_object_logger', 'null_logger', 'stderr_logger')
+    'make_file_object_logger', 'null_logger', 'stderr_logger',
+)
 
 __version__ = '0.2.2'
 __author__ = 'Keith Gaughan'
@@ -47,15 +48,20 @@ _EXCEPTIONS = (
     'IntegrityError',
     'InternalError',
     'ProgrammingError',
-    'NotSupportedError')
+    'NotSupportedError',
+)
 
 
 class NoContext(Exception):
-    """You are attempting to use dbkit outside of a database context."""
+    """
+    You are attempting to use dbkit outside of a database context.
+    """
 
 
 class NotSupported(Exception):
-    """You are attempting something unsupported."""
+    """
+    You are attempting something unsupported.
+    """
 
 
 class AbortTransaction(Exception):
@@ -65,22 +71,30 @@ class AbortTransaction(Exception):
 
 
 class _ContextStack(threading.local):
-    """The context stack for the current thread."""
+    """
+    The context stack for the current thread.
+    """
 
     def __init__(self):
         super(_ContextStack, self).__init__()
         self.stack = []
 
     def push(self, ctx):
-        """Push a context on top of this stack."""
+        """
+        Push a context on top of this stack.
+        """
         self.stack.append(ctx)
 
     def pop(self):
-        """Push a context from the top of this stack."""
+        """
+        Push a context from the top of this stack.
+        """
         self.stack.pop()
 
     def top(self):
-        """Return the topmost element in this stack."""
+        """
+        Return the topmost element in this stack.
+        """
         return self.stack[-1] if len(self.stack) > 0 else None
 
     def __len__(self):
@@ -88,11 +102,15 @@ class _ContextStack(threading.local):
 
 
 class Context(object):
-    """A database connection context."""
+    """
+    A database connection context.
+    """
 
-    __slots__ = (
+    __slots__ = _EXCEPTIONS + (
         'mdr', '_depth', 'logger', 'default_factory', 'param_style',
-        'last_row_count', 'last_row_id') + _EXCEPTIONS
+        'last_row_count', 'last_row_id',
+    )
+
     stack = _ContextStack()
 
     def __init__(self, module, mdr):
@@ -120,7 +138,9 @@ class Context(object):
 
     @classmethod
     def current(cls, with_exception=True):
-        """Returns the current database context."""
+        """
+        Returns the current database context.
+        """
         if with_exception and len(cls.stack) == 0:
             raise NoContext()
         return cls.stack.top()
@@ -154,7 +174,9 @@ class Context(object):
 
     @contextlib.contextmanager
     def cursor(self):
-        """Get a cursor for the current connection. For internal use only."""
+        """
+        Get a cursor for the current connection. For internal use only.
+        """
         cursor = self.mdr.cursor()
         try:
             yield cursor
@@ -168,7 +190,9 @@ class Context(object):
             raise
 
     def execute(self, stmt, args):
-        """Execute a statement, returning a cursor. For internal use only."""
+        """
+        Execute a statement, returning a cursor. For internal use only.
+        """
         self.logger(stmt, args)
         with self.cursor() as cursor:
             cursor.execute(stmt, args)
@@ -185,7 +209,9 @@ class Context(object):
             return cursor
 
     def close(self):
-        """Close the connection this context wraps."""
+        """
+        Close the connection this context wraps.
+        """
         self.logger = None
         for exc in _EXCEPTIONS:
             setattr(self, exc, None)
@@ -209,7 +235,8 @@ class ConnectionMediatorBase(object):
 
     __slots__ = (
         'OperationalError', 'InterfaceError', 'DatabaseError',
-        'conn', 'depth')
+        'conn', 'depth',
+    )
 
     # pylint: disable-msg=C0103
     def __init__(self, exceptions):
@@ -229,26 +256,38 @@ class ConnectionMediatorBase(object):
         raise NotImplementedError()
 
     def cursor(self):
-        """Get a cursor for the current connection."""
+        """
+        Get a cursor for the current connection.
+        """
         raise NotImplementedError()
 
     def close(self):
-        """Called to signal that any resources can be released."""
+        """
+        Called to signal that any resources can be released.
+        """
         raise NotImplementedError()
 
     def rollback(self):
-        """Rollback the current transaction."""
+        """
+        Rollback the current transaction.
+        """
         self.conn.rollback()
 
     def commit(self):
-        """Commit the current transaction."""
+        """
+        Commit the current transaction.
+        """
         self.conn.commit()
 
 
 class SingleConnectionMediator(ConnectionMediatorBase):
-    """Mediates access to a single unpooled connection."""
+    """
+    Mediates access to a single unpooled connection.
+    """
 
-    __slots__ = ('connect',)
+    __slots__ = (
+        'connect',
+    )
 
     def __init__(self, module, connect_):
         super(SingleConnectionMediator, self).__init__(module)
@@ -284,9 +323,13 @@ class SingleConnectionMediator(ConnectionMediatorBase):
 
 
 class PooledConnectionMediator(ConnectionMediatorBase):
-    """Mediates connection acquisition and release from/to a pool."""
+    """
+    Mediates connection acquisition and release from/to a pool.
+    """
 
-    __slots__ = ('pool',)
+    __slots__ = (
+        'pool',
+    )
 
     def __init__(self, pool):
         super(PooledConnectionMediator, self).__init__(pool)
@@ -337,11 +380,14 @@ class PooledConnectionMediator(ConnectionMediatorBase):
 
 # pylint: disable-msg=R0922
 class PoolBase(object):
-    """Abstract base class for all connection pools."""
+    """
+    Abstract base class for all connection pools.
+    """
 
     __slots__ = _EXCEPTIONS + (
         'module', 'logger', 'default_factory',
-        '_connect')
+        '_connect',
+    )
 
     def __init__(self, module, threadsafety, args, kwargs):
         if not hasattr(module, 'threadsafety'):
@@ -391,11 +437,15 @@ class PoolBase(object):
         raise NotImplementedError()
 
     def create_mediator(self):
-        """Create a suitable mediator for this pool."""
+        """
+        Create a suitable mediator for this pool.
+        """
         return PooledConnectionMediator(self)
 
     def connect(self):
-        """Returns a context that uses this pool as a connection source."""
+        """
+        Returns a context that uses this pool as a connection source.
+        """
         ctx = Context(self.module, self.create_mediator())
         ctx.logger = self.logger
         ctx.default_factory = self.default_factory
@@ -411,9 +461,13 @@ class PoolBase(object):
 
 
 class Pool(PoolBase):
-    """A very simple connection pool."""
+    """
+    A very simple connection pool.
+    """
 
-    __slots__ = ('_pool', '_cond', '_max_conns', '_allocated')
+    __slots__ = (
+        '_pool', '_cond', '_max_conns', '_allocated',
+    )
 
     def __init__(self, module, max_conns, *args, **kwargs):
         super(Pool, self).__init__(module, 2, args, kwargs)
@@ -537,7 +591,9 @@ def create_pool(module, max_conns, *args, **kwargs):
 
 
 def context():
-    """Returns the current database context."""
+    """
+    Returns the current database context.
+    """
     return Context.current()
 
 
@@ -621,12 +677,16 @@ def transactional(wrapped):
 
 
 def last_row_id():
-    """Return the row ID of the last (insert) statement."""
+    """
+    Return the row ID of the last (insert) statement.
+    """
     return Context.current().last_row_id
 
 
 def execute(stmt, args=()):
-    """Execute an SQL statement. Returns the number of affected rows."""
+    """
+    Execute an SQL statement. Returns the number of affected rows.
+    """
     ctx = Context.current()
     with ctx.mdr:
         cursor = ctx.execute(stmt, args)
@@ -636,7 +696,9 @@ def execute(stmt, args=()):
 
 
 def query(stmt, args=(), factory=None):
-    """Execute a query. This returns an iterator of the result set."""
+    """
+    Execute a query. This returns an iterator of the result set.
+    """
     ctx = Context.current()
     factory = ctx.default_factory if factory is None else factory
     with ctx.mdr:
@@ -644,7 +706,9 @@ def query(stmt, args=(), factory=None):
 
 
 def query_row(stmt, args=(), factory=None):
-    """Execute a query. Returns the first row of the result set, or `None`."""
+    """
+    Execute a query. Returns the first row of the result set, or `None`.
+    """
     for row in query(stmt, args, factory):
         return row
     return None
@@ -662,12 +726,16 @@ def query_value(stmt, args=(), default=None):
 
 
 def query_column(stmt, args=()):
-    """Execute a query, returning an iterable of the first column."""
+    """
+    Execute a query, returning an iterable of the first column.
+    """
     return query(stmt, args, ColumnFactory)
 
 
 def execute_proc(procname, args=()):
-    """Execute a stored procedure. Returns the number of affected rows."""
+    """
+    Execute a stored procedure. Returns the number of affected rows.
+    """
     ctx = Context.current()
     with ctx.mdr:
         cursor = ctx.execute_proc(procname, args)
@@ -715,9 +783,13 @@ def query_proc_column(procname, args=()):
 
 
 class FactoryBase(object):
-    """Base class for row factories."""
+    """
+    Base class for row factories.
+    """
 
-    __slots__ = ('cursor', 'mdr')
+    __slots__ = (
+        'cursor', 'mdr',
+    )
 
     def __init__(self, cursor, mdr):
         super(FactoryBase, self).__init__()
@@ -730,7 +802,9 @@ class FactoryBase(object):
 
     # pylint: disable=W0702,W0142
     def close(self):
-        """Release all resources associated with this factory."""
+        """
+        Release all resources associated with this factory.
+        """
         if self.mdr is None:
             return
         exc = (None, None, None)
@@ -752,7 +826,9 @@ class FactoryBase(object):
         return self
 
     def next(self):
-        """Iterator method to return next row()."""
+        """
+        Iterator method to return next row().
+        """
         try:
             return self.fetch()
         except:
@@ -760,14 +836,20 @@ class FactoryBase(object):
             raise
 
     def fetch(self):
-        """Fetches the next row."""
+        """
+        Fetches the next row.
+        """
         raise NotImplementedError()
 
 
 class DictFactory(FactoryBase):
-    """Iterator over a statement's results as a dict."""
+    """
+    Iterator over a statement's results as a dict.
+    """
 
-    __slots__ = ('columns',)
+    __slots__ = (
+        'columns',
+    )
 
     def __init__(self, cursor, mdr):
         super(DictFactory, self).__init__(cursor, mdr)
@@ -781,7 +863,9 @@ class DictFactory(FactoryBase):
 
 
 class TupleFactory(FactoryBase):
-    """Iterator over a statement's results where each row is a tuple."""
+    """
+    Iterator over a statement's results where each row is a tuple.
+    """
 
     __slots__ = ()
 
@@ -793,7 +877,9 @@ class TupleFactory(FactoryBase):
 
 
 class ColumnFactory(FactoryBase):
-    """Iterator over the first column of a statement's results."""
+    """
+    Iterator over the first column of a statement's results.
+    """
 
     __slots__ = ()
 
@@ -810,7 +896,9 @@ tuple_set = TupleFactory  # pylint: disable=C0103
 
 
 class AttrDict(dict):
-    """A dict whose elements may be accessed like object attributes."""
+    """
+    A dict whose elements may be accessed like object attributes.
+    """
 
     __slots__ = ()
 
@@ -834,13 +922,17 @@ class AttrDict(dict):
 
 
 def _ping(cursor):
-    """Ping a connection (given a cursor) in a cross-platform manner."""
+    """
+    Ping a connection (given a cursor) in a cross-platform manner.
+    """
     cursor.execute('SELECT 1')
     cursor.fetchall()
 
 
 def _safe_close(obj):
-    """Call the close method on an object safely."""
+    """
+    Call the close method on an object safely.
+    """
     # pylint: disable-msg=W0702
     try:
         obj.close()
@@ -882,14 +974,20 @@ def make_placeholders(seq, start=1):
 
 
 def null_logger(_stmt, _args):
-    """A logger that discards everything sent to it."""
+    """
+    A logger that discards everything sent to it.
+    """
     pass
 
 
 def make_file_object_logger(fh):
-    """Make a logger that logs to the given file object."""
+    """
+    Make a logger that logs to the given file object.
+    """
     def logger_func(stmt, args, fh=fh):
-        """A logger that logs everything sent to a file object."""
+        """
+        A logger that logs everything sent to a file object.
+        """
         now = datetime.datetime.now()
         print >> fh, "Executing (%s):" % now.isoformat()
         print >> fh, textwrap.dedent(stmt)

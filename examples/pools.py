@@ -1,11 +1,18 @@
 import web
 import psycopg2
 import pystache
-from dbkit import Pool, transactional, query, query_value, execute, dict_set
+from dbkit import (
+    dict_set,
+    execute,
+    Pool,
+    query,
+    query_value,
+    transactional,
+)
 
 
 urls = (
-    '/(.*)', 'hello'
+    '/(.*)', 'hello',
 )
 app = web.application(urls, globals())
 pool = Pool(psycopg2, 2, "dbname=namecounter user=keith")
@@ -41,6 +48,7 @@ def get_names():
 
 
 class hello(object):
+
     def GET(self, name):
         ctx = pool.connect()
         if not name:
