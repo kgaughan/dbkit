@@ -36,4 +36,24 @@ thread to occasionally poke the various pools, but for now a reap method
 will do.
 
 
+1.0.0 plans
+===========
+
+- Separate the connection hardening code out from the pool. The idea is to
+  add an extra module called 'dbkit.hardened' to provide hardened
+  connections in much the same manner as the SteadyDB_ module of DBUtils_,
+  providing a DB-API-style wrapper around connections and cursors.
+  Naturally this connection hardening will be usable independently of the
+  rest of dbkit, but will tie into its mediator system for pooling.
+
+- Abstract away `paramstyles`. Instead, we'll have a translation layer
+  that will allow for use of a consistent style. While we're at it, we'd
+  might as well add transparent support for ``IN (:list)`` too.
+
+- More optimistic connection pinging and garbage collection.
+
+.. _SteadyDB: http://www.webwareforpython.org/DBUtils/Docs/UsersGuide.html#steadydb
+.. _DBUtils: http://www.webwareforpython.org/DBUtils/
+
+
 .. vim:set textwidth=74 et lbr ft=rst:
