@@ -1,12 +1,13 @@
+.. image:: https://secure.travis-ci.org/kgaughan/dbkit.png?branch=master
+   :target: http://travis-ci.org/kgaughan/dbkit
+
+.. image:: https://pypip.in/v/dbkit/badge.png
+   :target: https://pypi.python.org/pypi/dbkit/
+
 **dbkit** is a library that abstracts away at least part of the pain
 involved in dealing with `DB-API 2`_ compatible database drivers.
 
-.. image:: https://secure.travis-ci.org/kgaughan/dbkit.png?branch=master
-   :width: 89px
-   :height: 13px 
-   :target: http://travis-ci.org/kgaughan/dbkit
-
-::
+Here's an example::
 
     from dbkit import connect, query
     from contextlib import closing
@@ -15,16 +16,6 @@ involved in dealing with `DB-API 2`_ compatible database drivers.
     with connect(sqlite3, 'counters.db') as ctx, closing(ctx):
         for counter, value in query('SELECT counter, value FROM counters'):
             print "%s: %d" % (counter, value)
-
-:Author:
-    Keith Gaughan (http://stereochro.me)
-
-:Repo:
-    https://github.com/kgaughan/dbkit
-
-:Documentation:
-    http://dbkit.readthedocs.org/
-
 
 Overview
 ========
@@ -55,7 +46,27 @@ Non-aims:
    annoying but necessary boilerplate code involved in dealing with
    `DB-API 2`_ drivers, not to totally abstract away SQL itself.
 
+Installation
+============
+
+*dbkit* can be installed with either either pip_ (recommended)::
+
+    $ pip install dbkit
+
+Or with easy_install_::
+
+    $ easy_install dbkit
+
+Development
+===========
+
+The repos can be found on `Github <https://github.com/kgaughan/dbkit>`_ while
+the documentation can be found on `Read the Docs
+<http://dbkit.readthedocs.org/>`_.
+
 .. _DB-API 2: http://www.python.org/dev/peps/pep-0249/
 .. _SQLObject: http://sqlobject.org/
 .. _SQLAlchemy: http://sqlalchemy.org/
 .. _context: http://docs.python.org/library/contextlib.html
+.. _pip: http://www.pip-installer.org/
+.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall

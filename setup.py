@@ -13,7 +13,7 @@ setup(
     name='dbkit',
     version=META['version'],
     description='DB-API made easier',
-    long_description=read('README'),
+    long_description=read('README') + "\n\n" + read('ChangeLog'),
     url='https://github.com/kgaughan/dbkit/',
     license='MIT',
     py_modules=['dbkit'],
