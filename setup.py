@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import with_statement
-
 from setuptools import setup
 from buildkit import *
 
@@ -18,7 +16,7 @@ setup(
     license='MIT',
     py_modules=['dbkit'],
 
-    classifiers=[
+    classifiers=(
         'Development Status :: 4 - Beta',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
@@ -26,7 +24,7 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Database',
-    ],
+    ),
 
     author=META['author'],
     author_email=META['email']
