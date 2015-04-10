@@ -190,7 +190,7 @@ def test_unpooled_disconnect():
     except ctx.OperationalError, exc:
         assert ctx.mdr.depth == 0
         assert ctx.mdr.conn is None
-        assert exc.message == "Simulating disconnect"
+        assert str(exc) == "Simulating disconnect"
 
     # Test reconnect. As we're running this all against an in-memory DB,
     # everything in it will have been throttled, thus the only query we can
@@ -320,7 +320,7 @@ def test_make_placeholders():
                 print dbkit.make_placeholders({'foo': None})
                 assert False, "Should've got 'NotSupported' exception."
             except dbkit.NotSupported, exc:
-                assert exc.message == "Param style 'qmark' does not support sequence type 'dict'"
+                assert str(exc) == "Param style 'qmark' does not support sequence type 'dict'"
 
     with utils.set_temporarily(fakedb, 'paramstyle', 'named'):
         with dbkit.connect(fakedb, 'db') as ctx:
@@ -328,6 +328,6 @@ def test_make_placeholders():
                 print dbkit.make_placeholders(['foo'])
                 assert False, "Should've got 'NotSupported' exception."
             except dbkit.NotSupported, exc:
-                assert exc.message == "Param style 'named' does not support sequence type 'list'"
+                assert str(exc) == "Param style 'named' does not support sequence type 'list'"
 
 # vim:set et ai:
