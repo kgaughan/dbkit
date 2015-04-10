@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 
+import os.path
+
 from setuptools import setup
-from buildkit import *
 
 
-META = get_metadata('dbkit.py')
+def read(filename):
+    """Read files relative to this file."""
+    full_path = os.path.join(os.path.dirname(__file__), filename)
+    with open(full_path, 'r') as fh:
+        return fh.read()
 
 
 setup(
     name='dbkit',
-    version=META['version'],
+    version='0.2.2',
     description='DB-API made easier',
     long_description=read('README') + "\n\n" + read('ChangeLog'),
     url='https://github.com/kgaughan/dbkit/',
@@ -26,6 +31,6 @@ setup(
         'Topic :: Database',
     ),
 
-    author=META['author'],
-    author_email=META['email']
+    author='Keith Gaughan',
+    author_email='k@stereochro.me',
 )

@@ -19,6 +19,8 @@ import sys
 import textwrap
 import threading
 
+import pkg_resources
+
 
 __all__ = (
     'NoContext', 'NotSupported', 'AbortTransaction',
@@ -32,9 +34,7 @@ __all__ = (
     'make_file_object_logger', 'null_logger', 'stderr_logger',
 )
 
-__version__ = '0.2.2'
-__author__ = 'Keith Gaughan'
-__email__ = 'k@stereochro.me'
+__version__ = pkg_resources.get_distribution('dbkit').version
 
 
 # DB-API 2 exceptions exposed by all drivers.
