@@ -178,16 +178,17 @@ class Context(object):
         Get a cursor for the current connection. For internal use only.
         """
         cursor = self.mdr.cursor()
-        try:
-            yield cursor
-            if cursor.rowcount != -1:
-                self.last_row_count = cursor.rowcount
-            self.last_row_id = getattr(cursor, 'lastrowid', None)
-        except:
-            self.last_row_count = None
-            self.last_row_id = None
-            _safe_close(cursor)
-            raise
+        with self.transaction():
+            try:
+                yield cursor
+                if cursor.rowcount != -1:
+                    self.last_row_count = cursor.rowcount
+                self.last_row_id = getattr(cursor, 'lastrowid', None)
+            except:
+                self.last_row_count = None
+                self.last_row_id = None
+                _safe_close(cursor)
+                raise
 
     def execute(self, stmt, args):
         """

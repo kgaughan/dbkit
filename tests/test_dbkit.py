@@ -232,10 +232,10 @@ def test_procs():
         conn = ctx.mdr.conn
     assert conn.executed == 4
     assert conn.session == [
-        'cursor', 'proc:execute_proc', 'cursor-close',
-        'cursor', 'proc:query_proc_row', 'cursor-close',
-        'cursor', 'proc:query_proc_value', 'cursor-close',
-        'cursor', 'proc:query_proc_column', 'cursor-close']
+        'cursor', 'proc:execute_proc', 'commit', 'cursor-close',
+        'cursor', 'proc:query_proc_row', 'commit', 'cursor-close',
+        'cursor', 'proc:query_proc_value', 'commit', 'cursor-close',
+        'cursor', 'proc:query_proc_column', 'commit', 'cursor-close']
 
 
 def test_to_dict_nothing():

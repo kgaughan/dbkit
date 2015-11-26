@@ -14,7 +14,7 @@ def read(filename):
 
 setup(
     name='dbkit',
-    version='0.2.2',
+    version='0.2.3',
     description='DB-API made easier',
     long_description=read('README') + "\n\n" + read('ChangeLog'),
     url='https://github.com/kgaughan/dbkit/',
