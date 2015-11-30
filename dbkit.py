@@ -20,6 +20,7 @@ import textwrap
 import threading
 
 import pkg_resources
+import six
 
 
 __all__ = (
@@ -35,6 +36,13 @@ __all__ = (
 )
 
 __version__ = pkg_resources.get_distribution('dbkit').version
+
+
+# Python 3 hack.
+try:
+    xrange
+except:
+    xrange = range
 
 
 # DB-API 2 exceptions exposed by all drivers.
@@ -783,7 +791,7 @@ def query_proc_column(procname, args=()):
     return query_proc(procname, args, ColumnFactory)
 
 
-class FactoryBase(object):
+class FactoryBase(six.Iterator):
     """
     Base class for row factories.
     """
@@ -821,12 +829,12 @@ class FactoryBase(object):
         self.mdr = None
         self.cursor = None
         if exc != (None, None, None):
-            raise exc[0], exc[1], exc[2]
+            six.reraise(*exc)
 
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         """
         Iterator method to return next row().
         """
@@ -906,7 +914,7 @@ class AttrDict(dict):
     def __getattr__(self, key):
         try:
             return self[key]
-        except KeyError, exc:
+        except KeyError as exc:
             raise AttributeError(exc)
 
     def __setattr__(self, key, value):
@@ -915,7 +923,7 @@ class AttrDict(dict):
     def __delattr__(self, key):
         try:
             del self[key]
-        except KeyError, exc:
+        except KeyError as exc:
             raise AttributeError(exc)
 
     def __repr__(self):
@@ -959,10 +967,12 @@ def make_placeholders(seq, start=1):
     if isinstance(seq, dict):
         if param_style in ('named', 'pyformat'):
             template = ':%s' if param_style == 'named' else '%%(%s)s'
-            placeholders = (template % key for key in seq.iterkeys())
+            placeholders = (template % key
+                            for key in six.iterkeys(seq))
     elif isinstance(seq, (list, tuple)):
         if param_style == 'numeric':
-            placeholders = (':%d' % i for i in xrange(start, start + len(seq)))
+            placeholders = (':%d' % i
+                            for i in xrange(start, start + len(seq)))
         elif param_style in ('qmark', 'format', 'pyformat'):
             placeholders = itertools.repeat(
                 '?' if param_style == 'qmark' else '%s',
@@ -990,9 +1000,9 @@ def make_file_object_logger(fh):
         A logger that logs everything sent to a file object.
         """
         now = datetime.datetime.now()
-        print >> fh, "Executing (%s):" % now.isoformat()
-        print >> fh, textwrap.dedent(stmt)
-        print >> fh, "Arguments:"
+        six.print_("Executing (%s):" % now.isoformat(), file=fh)
+        six.print_(textwrap.dedent(stmt), file=fh)
+        six.print_("Arguments:", file=fh)
         pprint.pprint(args, fh)
     return logger_func
 
