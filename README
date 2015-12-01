@@ -1,8 +1,5 @@
-.. image:: https://secure.travis-ci.org/kgaughan/dbkit.png?branch=master
-   :target: http://travis-ci.org/kgaughan/dbkit
-
-.. image:: https://pypip.in/v/dbkit/badge.png
-   :target: https://pypi.python.org/pypi/dbkit/
+.. image:: https://api.travis-ci.org/kgaughan/dbkit.png?branch=master
+   :target: https://travis-ci.org/kgaughan/dbkit
 
 **dbkit** is a library that abstracts away at least part of the pain
 involved in dealing with `DB-API 2`_ compatible database drivers.
