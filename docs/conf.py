@@ -11,16 +11,15 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, re
+import os
+import sys
+
+import pkg_resources
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
-
-import buildkit
-
-META = buildkit.get_metadata('dbkit.py')
 
 # -- General configuration -----------------------------------------------------
 
@@ -52,7 +51,7 @@ copyright = u'2012, Keith Gaughan'
 # built documents.
 #
 # The short X.Y version.
-version = META['version']
+version = pkg_resources.get_distribution('dbkit').version
 # The full version, including alpha/beta/rc tags.
 release = version
 
