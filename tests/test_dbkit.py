@@ -1,7 +1,6 @@
 from __future__ import with_statement
 
 import contextlib
-import operator
 import sqlite3
 import unittest
 
@@ -135,9 +134,10 @@ class TestBasics(unittest.TestCase):
 
     def test_procs(self):
         def expected(*args):
-            return reduce(operator.add,
-                          [['cursor', arg, 'commit', 'cursor-close']
-                           for arg in args])
+            result = []
+            for arg in args:
+                result += ['cursor', arg, 'commit', 'cursor-close']
+            return result
 
         with dbkit.connect(fakedb, 'db') as ctx:
             dbkit.execute_proc('execute_proc')
