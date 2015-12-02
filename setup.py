@@ -20,6 +20,7 @@ setup(
     url='https://github.com/kgaughan/dbkit/',
     license='MIT',
     py_modules=['dbkit'],
+    zip_safe=True,
 
     test_suite='tests.suite',
 
