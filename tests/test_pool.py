@@ -10,9 +10,8 @@ from tests import fakedb, utils
 
 class TestPool(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
+    def setUp(self):
+        self.pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
 
     def test_check_pool(self):
         self.assertTrue(isinstance(self.pool, dbkit.Pool))
