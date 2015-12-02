@@ -6,6 +6,11 @@ import contextlib
 import threading
 
 
+def sort_fields(fields):
+    """Helper to ensure named fields are sorted for the test."""
+    return ', '.join(sorted(field.lstrip() for field in fields.split(',')))
+
+
 def skip_first_line(value):
     """Returns everything after the first newline in the string."""
     parts = value.split("\n", 1)

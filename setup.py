@@ -21,6 +21,8 @@ setup(
     license='MIT',
     py_modules=['dbkit'],
 
+    test_suite='tests.suite',
+
     install_requires=(
         'six',
     ),
