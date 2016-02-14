@@ -12,6 +12,7 @@ _build/
 /cover
 .coverage
 .tox
+/.eggs
 __pycache__
 # Other random nonsense
 /.venv
