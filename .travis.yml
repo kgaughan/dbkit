@@ -8,3 +8,6 @@ python:
   - "3.5"
 script:
   - python setup.py test
+addons:
+  code_climate:
+    repo_token: fba495e1b57e9b63719ba65ef9684ba30a960d6ffcc68de46208e1e4612baa25
