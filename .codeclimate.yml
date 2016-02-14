@@ -1,4 +1,12 @@
 languages:
-    Python: true
+  Python: true
 exclude_paths:
-- "docs/*"
+  - "docs/*"
+engines:
+  duplication:
+    enabled: true
+    exclude_fingerprints:
+      - 12907d38fb40d6d920c679ec5ea4be40
+      - a72c3feb38d8d450aa50b8b35723784e
+      - b8e4b82f857ebf1dc764a1415d18164c
+      - bf7f5f2db8d5bfa45c3c9a0208cadd3d
