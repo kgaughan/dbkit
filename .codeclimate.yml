@@ -1,12 +1,20 @@
-languages:
-  Python: true
-exclude_paths:
-  - "docs/*"
 engines:
   duplication:
     enabled: true
+    config:
+      languages:
+        - python
     exclude_fingerprints:
       - 12907d38fb40d6d920c679ec5ea4be40
       - a72c3feb38d8d450aa50b8b35723784e
       - b8e4b82f857ebf1dc764a1415d18164c
       - bf7f5f2db8d5bfa45c3c9a0208cadd3d
+  fixme:
+    enabled: true
+  radon:
+    enabled: true
+ratings:
+  paths:
+    - "**.py"
+exclude_paths:
+  - "docs/*"
