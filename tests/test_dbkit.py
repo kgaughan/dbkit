@@ -178,7 +178,16 @@ class TestBasics(unittest.TestCase):
         self.assertTrue('barney' in result)
         self.assertTrue(result['barney'] is row)
 
-    def test_make_placeholders(self):
+    def assert_placeholders(self, n, expected, start=1):
+        self.assertEqual(dbkit.make_placeholders([0] * n, start), expected)
+
+    def assert_named(self, keys, pattern):
+        keys = sorted(keys)
+        dct = dict(zip(keys, [None] * len(keys)))
+        self.assertEqual(utils.sort_fields(dbkit.make_placeholders(dct)),
+                         ', '.join(pattern % (key,) for key in keys))
+
+    def test_make_placeholders_empty(self):
         with dbkit.connect(fakedb, 'db'):
             try:
                 dbkit.make_placeholders([])
@@ -186,41 +195,43 @@ class TestBasics(unittest.TestCase):
             except ValueError:
                 pass
 
+    def test_make_placeholders_qmark(self):
         with utils.set_temporarily(fakedb, 'paramstyle', 'qmark'):
             with dbkit.connect(fakedb, 'db'):
-                self.assertEqual(dbkit.make_placeholders([0]), '?')
-                self.assertEqual(dbkit.make_placeholders([0, 1]), '?, ?')
-                self.assertEqual(dbkit.make_placeholders([0, 1, 4]), '?, ?, ?')
+                self.assert_placeholders(1, '?')
+                self.assert_placeholders(2, '?, ?')
+                self.assert_placeholders(3, '?, ?, ?')
 
+    def test_make_placeholders_format(self):
         for style in ('format', 'pyformat'):
             with utils.set_temporarily(fakedb, 'paramstyle', style):
                 with dbkit.connect(fakedb, 'db'):
-                    self.assertEqual(dbkit.make_placeholders([0]), '%s')
-                    self.assertEqual(dbkit.make_placeholders([0, 2]), '%s, %s')
-                    self.assertEqual(dbkit.make_placeholders([0, 2, 7]), '%s, %s, %s')
+                    self.assert_placeholders(1, '%s')
+                    self.assert_placeholders(2, '%s, %s')
+                    self.assert_placeholders(3, '%s, %s, %s')
 
+    def test_make_placeholders_numeric(self):
         with utils.set_temporarily(fakedb, 'paramstyle', 'numeric'):
             with dbkit.connect(fakedb, 'db'):
-                self.assertEqual(dbkit.make_placeholders([0], 7), ':7')
-                self.assertEqual(dbkit.make_placeholders([0, 1], 7), ':7, :8')
-                self.assertEqual(dbkit.make_placeholders([0, 1, 4], 7), ':7, :8, :9')
+                self.assert_placeholders(1, ':7', start=7)
+                self.assert_placeholders(2, ':7, :8', start=7)
+                self.assert_placeholders(3, ':7, :8, :9', start=7)
 
-        def make_sorted(seq):
-            """Wrap repetitive code for the next few checks."""
-            return utils.sort_fields(dbkit.make_placeholders(seq))
-
+    def test_make_placeholders_format_dict(self):
         with utils.set_temporarily(fakedb, 'paramstyle', 'pyformat'):
             with dbkit.connect(fakedb, 'db'):
-                self.assertEqual(make_sorted({'foo': None}), '%(foo)s')
-                self.assertEqual(make_sorted({'foo': None, 'bar': None}), '%(bar)s, %(foo)s')
-                self.assertEqual(make_sorted({'foo': None, 'bar': None, 'baz': None}), '%(bar)s, %(baz)s, %(foo)s')
+                self.assert_named(['foo'], '%%(%s)s')
+                self.assert_named(['foo', 'bar'], '%%(%s)s')
+                self.assert_named(['foo', 'bar', 'baz'], '%%(%s)s')
 
+    def test_make_placeholders_named(self):
         with utils.set_temporarily(fakedb, 'paramstyle', 'named'):
             with dbkit.connect(fakedb, 'db'):
-                self.assertEqual(make_sorted({'foo': None}), ':foo')
-                self.assertEqual(make_sorted({'foo': None, 'bar': None}), ':bar, :foo')
-                self.assertEqual(make_sorted({'foo': None, 'bar': None, 'baz': None}), ':bar, :baz, :foo')
+                self.assert_named(['foo'], ':%s')
+                self.assert_named(['foo', 'bar'], ':%s')
+                self.assert_named(['foo', 'bar', 'baz'], ':%s')
 
+    def test_make_placeholders_unsupported(self):
         with utils.set_temporarily(fakedb, 'paramstyle', 'qmark'):
             with dbkit.connect(fakedb, 'db'):
                 try:
@@ -229,6 +240,7 @@ class TestBasics(unittest.TestCase):
                 except dbkit.NotSupported as exc:
                     self.assertEqual(str(exc), "Param style 'qmark' does not support sequence type 'dict'")
 
+    def test_make_placeholders_unsupported_named(self):
         with utils.set_temporarily(fakedb, 'paramstyle', 'named'):
             with dbkit.connect(fakedb, 'db'):
                 try:
