@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import with_statement
+
 import os.path
 
 from setuptools import setup
@@ -14,7 +16,7 @@ def read(filename):
 
 setup(
     name='dbkit',
-    version='0.2.4',
+    version='0.2.5',
     description='DB-API made easier',
     long_description=read('README') + "\n\n" + read('ChangeLog'),
     url='https://github.com/kgaughan/dbkit/',
@@ -29,6 +31,7 @@ setup(
     ),
 
     classifiers=(
+        'Programming Language :: Python :: 2.5',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
