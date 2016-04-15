@@ -10,7 +10,6 @@ Change history
 
 * Minor fixes and cleanup, including getting rid of a nose dependency.
 * Wheel support.
-* Fix on 2.5 for work.
 
 .. _version-0.2.4:
 
@@ -27,6 +26,7 @@ Change history
 * `Context.cursor()` now always creates a transaction. The lack of this outer
   transaction meant that PostgreSQL would end up with a large number of idle
   transactions that had neither been committed or rolled back.
+* This is the last version that will work on Python 2.5.
 
 .. _version-0.2.2:
 

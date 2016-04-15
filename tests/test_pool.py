@@ -1,8 +1,5 @@
-from __future__ import with_statement
-
 import threading
 import unittest
-
 
 import dbkit
 from tests import fakedb, utils

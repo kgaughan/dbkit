@@ -7,8 +7,6 @@ much of the boilerplate involved in dealing with DB-API 2 compatible
 database drivers.
 """
 
-from __future__ import with_statement
-
 import collections
 import contextlib
 import datetime
