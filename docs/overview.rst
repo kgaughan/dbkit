@@ -87,7 +87,7 @@ as I'm happy with the documentation. To build a source package for installation
 and subsequently install it, do::
 
    python setup.py sdist
-   pip install dist/dbkit-0.1.0.tar.gz
+   pip install dist/dbkit-0.2.5.tar.gz
 
 Alternatively, you can install it directly, bypassing package creation::
 
@@ -97,8 +97,9 @@ Alternatively, you can install it directly, bypassing package creation::
 Requirements
 ============
 
-`dbkit` will work with Python 2.5, 2.6, and 2.7 without issue. It appears to
-have some minor issues with PyPy, but it ought to work fine. It's not yet
-compatible with Python 3.
+`dbkit` will work with Python 2.6, 2.7, and 3.3+ without issue. It appears to
+have some minor issues with PyPy, but it ought to work fine. Since 0.2.3,
+it is no longer compatible with Python 2.5.
 
-`dbkit` has no dependencies other than requiring a database driver.
+`dbkit` has no dependencies other than requiring a database driver and six
+to allow Python 2 and Python 3 support.
