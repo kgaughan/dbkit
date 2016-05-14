@@ -316,7 +316,7 @@ class TestAgainstDB(unittest.TestCase):
                         self.assertEqual(
                             dbkit.query_value(GET_COUNTER, ('foo',)), 42)
                         raise self.ctx.OperationalError("Simulating disconnect")
-                except:
+                except self.ctx.OperationalError:
                     self.assertEqual(self.ctx.mdr.depth, 0)
                     self.assertTrue(self.ctx.mdr.conn is None)
                     raise
