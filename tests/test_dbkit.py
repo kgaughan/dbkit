@@ -308,6 +308,7 @@ class TestAgainstDB(unittest.TestCase):
     def test_unpooled_disconnect(self):
         # Test rollback of connection.
         try:
+            self.assertEqual(self.ctx.mdr.depth, 0)
             with self.ctx:
                 try:
                     with dbkit.transaction():
