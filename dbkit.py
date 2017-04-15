@@ -559,7 +559,7 @@ class DummyPool(PoolBase):
 
     def get_max_reattempts(self):
         # If we can't connect first time, we can't connect at all.
-        return 0
+        return 500
 
 
 def _make_connect(module, args, kwargs):
