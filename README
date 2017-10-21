@@ -67,3 +67,5 @@ the documentation can be found on `Read the Docs
 .. _context: http://docs.python.org/library/contextlib.html
 .. _pip: http://www.pip-installer.org/
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
+
+.. vim:set ft=rst:
