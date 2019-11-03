@@ -1,20 +1,20 @@
 test:
-	python setup.py test
+	python3 setup.py test
 
 upload:
-	python setup.py sdist bdist_wheel upload
+	python3 setup.py sdist bdist_wheel upload
 
 tag:
-	@git tag v$$(python setup.py --version)
-	@echo Tagged with version in setup.py: v$$(python setup.py --version)
+	@git tag v$$(python3 setup.py --version)
+	@echo Tagged with version in setup.py: v$$(python3 setup.py --version)
 	@echo Remember to run: git push --tags
 
 docs:
-	@python setup.py build_sphinx
+	@python3 setup.py build_sphinx
 
 dev:
-	@pip install -e .
-	@pip install Sphinx
+	@pip3 install -e .
+	@pip3 install Sphinx
 
 clean:
 	@mkdir -p docs/_static

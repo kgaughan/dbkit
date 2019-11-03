@@ -7,6 +7,8 @@ much of the boilerplate involved in dealing with DB-API 2 compatible
 database drivers.
 """
 
+from __future__ import print_function
+
 import collections
 import contextlib
 import datetime
@@ -18,22 +20,34 @@ import textwrap
 import threading
 
 import pkg_resources
-import six
 
 
 __all__ = (
-    'NoContext', 'NotSupported', 'AbortTransaction',
-    'PoolBase', 'Pool',
-    'connect', 'context',
-    'transaction', 'transactional',
-    'execute', 'query_row', 'query_value', 'query_column',
-    'execute_proc', 'query_proc_row',
-    'query_proc_value', 'query_proc_column',
-    'DictFactory', 'TupleFactory',
-    'make_file_object_logger', 'null_logger', 'stderr_logger',
+    "NoContext",
+    "NotSupported",
+    "AbortTransaction",
+    "PoolBase",
+    "Pool",
+    "connect",
+    "context",
+    "transaction",
+    "transactional",
+    "execute",
+    "query_row",
+    "query_value",
+    "query_column",
+    "execute_proc",
+    "query_proc_row",
+    "query_proc_value",
+    "query_proc_column",
+    "DictFactory",
+    "TupleFactory",
+    "make_file_object_logger",
+    "null_logger",
+    "stderr_logger",
 )
 
-__version__ = pkg_resources.get_distribution('dbkit').version
+__version__ = pkg_resources.get_distribution("dbkit").version
 
 
 # Python 3 hack.
@@ -45,16 +59,16 @@ except:
 
 # DB-API 2 exceptions exposed by all drivers.
 _EXCEPTIONS = (
-    'Warning',
-    'Error',
-    'InterfaceError',
-    'DatabaseError',
-    'DataError',
-    'OperationalError',
-    'IntegrityError',
-    'InternalError',
-    'ProgrammingError',
-    'NotSupportedError',
+    "Warning",
+    "Error",
+    "InterfaceError",
+    "DatabaseError",
+    "DataError",
+    "OperationalError",
+    "IntegrityError",
+    "InternalError",
+    "ProgrammingError",
+    "NotSupportedError",
 )
 
 
@@ -113,8 +127,13 @@ class Context(object):
     """
 
     __slots__ = _EXCEPTIONS + (
-        'mdr', '_depth', 'logger', 'default_factory', 'param_style',
-        'last_row_count', 'last_row_id',
+        "mdr",
+        "_depth",
+        "logger",
+        "default_factory",
+        "param_style",
+        "last_row_count",
+        "last_row_id",
     )
 
     stack = _ContextStack()
@@ -189,7 +208,7 @@ class Context(object):
                 yield cursor
                 if cursor.rowcount != -1:
                     self.last_row_count = cursor.rowcount
-                self.last_row_id = getattr(cursor, 'lastrowid', None)
+                self.last_row_id = getattr(cursor, "lastrowid", None)
             except:
                 self.last_row_count = None
                 self.last_row_id = None
@@ -240,10 +259,7 @@ class ConnectionMediatorBase(object):
     0.
     """
 
-    __slots__ = (
-        'OperationalError', 'InterfaceError', 'DatabaseError',
-        'conn', 'depth',
-    )
+    __slots__ = ("OperationalError", "InterfaceError", "DatabaseError", "conn", "depth")
 
     # pylint: disable-msg=C0103
     def __init__(self, exceptions):
@@ -292,9 +308,7 @@ class SingleConnectionMediator(ConnectionMediatorBase):
     Mediates access to a single unpooled connection.
     """
 
-    __slots__ = (
-        'connect',
-    )
+    __slots__ = ("connect",)
 
     def __init__(self, module, connect_):
         super(SingleConnectionMediator, self).__init__(module)
@@ -334,9 +348,7 @@ class PooledConnectionMediator(ConnectionMediatorBase):
     Mediates connection acquisition and release from/to a pool.
     """
 
-    __slots__ = (
-        'pool',
-    )
+    __slots__ = ("pool",)
 
     def __init__(self, pool):
         super(PooledConnectionMediator, self).__init__(pool)
@@ -391,13 +403,10 @@ class PoolBase(object):
     Abstract base class for all connection pools.
     """
 
-    __slots__ = _EXCEPTIONS + (
-        'module', 'logger', 'default_factory',
-        '_connect',
-    )
+    __slots__ = _EXCEPTIONS + ("module", "logger", "default_factory", "_connect")
 
     def __init__(self, module, threadsafety, args, kwargs):
-        if not hasattr(module, 'threadsafety'):
+        if not hasattr(module, "threadsafety"):
             raise NotSupported("Cannot determine driver threadsafety.")
         if module.threadsafety < threadsafety:
             raise NotSupported("Driver is not sufficiently threadsafe.")
@@ -472,9 +481,7 @@ class Pool(PoolBase):
     A very simple connection pool.
     """
 
-    __slots__ = (
-        '_pool', '_cond', '_max_conns', '_allocated',
-    )
+    __slots__ = ("_pool", "_cond", "_max_conns", "_allocated")
 
     def __init__(self, module, max_conns, *args, **kwargs):
         super(Pool, self).__init__(module, 2, args, kwargs)
@@ -577,8 +584,7 @@ def connect(module, *args, **kwargs):
     a database context representing that connection. Any arguments or
     keyword arguments are passed the module's :py:func:`connect` function.
     """
-    mdr = SingleConnectionMediator(
-        module, _make_connect(module, args, kwargs))
+    mdr = SingleConnectionMediator(module, _make_connect(module, args, kwargs))
     return Context(module, mdr)
 
 
@@ -586,7 +592,7 @@ def create_pool(module, max_conns, *args, **kwargs):
     """
     Create a connection pool appropriate to the driver module's capabilities.
     """
-    if not hasattr(module, 'threadsafety'):
+    if not hasattr(module, "threadsafety"):
         raise NotSupported("Cannot determine driver threadsafety.")
     if max_conns < 1:
         raise ValueError("Minimum number of connections is 1.")
@@ -621,7 +627,7 @@ def transaction():
             try:
                 change_ownership(page_id, new_owner_id)
             catch ctx.IntegrityError:
-                print >> sys.stderr, "Naughty!"
+                print("Naughty!", file=sys.stderr)
 
         def change_ownership(page_id, new_owner_id):
             with transaction():
@@ -659,7 +665,7 @@ def transactional(wrapped):
             try:
                 change_ownership(page_id, new_owner_id)
             catch ctx.IntegrityError:
-                print >> sys.stderr, "Naughty!"
+                print("Naughty!", file=sys.stderr)
 
         @transactional
         def change_ownership(page_id, new_owner_id):
@@ -680,6 +686,7 @@ def transactional(wrapped):
     def wrapper(*args, **kwargs):
         with Context.current().transaction():
             return wrapped(*args, **kwargs)
+
     return functools.update_wrapper(wrapper, wrapped)
 
 
@@ -789,14 +796,12 @@ def query_proc_column(procname, args=()):
     return query_proc(procname, args, ColumnFactory)
 
 
-class FactoryBase(six.Iterator):
+class FactoryBase:
     """
     Base class for row factories.
     """
 
-    __slots__ = (
-        'cursor', 'mdr',
-    )
+    __slots__ = ("cursor", "mdr")
 
     def __init__(self, cursor, mdr):
         super(FactoryBase, self).__init__()
@@ -827,7 +832,17 @@ class FactoryBase(six.Iterator):
         self.mdr = None
         self.cursor = None
         if exc != (None, None, None):
-            six.reraise(*exc)
+            tp, value, tb = exc
+            # Taken from six.reraise:
+            try:
+                if value is None:
+                    value = tp()
+                if value.__traceback__ is not tb:
+                    raise value.with_traceback(tb)
+                raise value
+            finally:
+                value = None
+                tb = None
 
     def __iter__(self):
         return self
@@ -854,9 +869,7 @@ class DictFactory(FactoryBase):
     Iterator over a statement's results as a dict.
     """
 
-    __slots__ = (
-        'columns',
-    )
+    __slots__ = ("columns",)
 
     def __init__(self, cursor, mdr):
         super(DictFactory, self).__init__(cursor, mdr)
@@ -925,14 +938,14 @@ class AttrDict(dict):
             raise AttributeError(exc)
 
     def __repr__(self):
-        return '<AttrDict ' + dict.__repr__(self) + '>'
+        return "<AttrDict " + dict.__repr__(self) + ">"
 
 
 def _ping(cursor):
     """
     Ping a connection (given a cursor) in a cross-platform manner.
     """
-    cursor.execute('SELECT 1')
+    cursor.execute("SELECT 1")
     cursor.fetchall()
 
 
@@ -959,27 +972,26 @@ def make_placeholders(seq, start=1):
     Generate placeholders for the given sequence.
     """
     if len(seq) == 0:
-        raise ValueError('Sequence must have at least one element.')
+        raise ValueError("Sequence must have at least one element.")
     param_style = Context.current().param_style
     placeholders = None
     if isinstance(seq, dict):
-        if param_style in ('named', 'pyformat'):
-            template = ':%s' if param_style == 'named' else '%%(%s)s'
-            placeholders = (template % key
-                            for key in six.iterkeys(seq))
+        if param_style in ("named", "pyformat"):
+            template = ":%s" if param_style == "named" else "%%(%s)s"
+            placeholders = (template % key for key in seq.keys())
     elif isinstance(seq, (list, tuple)):
-        if param_style == 'numeric':
-            placeholders = (':%d' % i
-                            for i in xrange(start, start + len(seq)))
-        elif param_style in ('qmark', 'format', 'pyformat'):
+        if param_style == "numeric":
+            placeholders = (":%d" % i for i in xrange(start, start + len(seq)))
+        elif param_style in ("qmark", "format", "pyformat"):
             placeholders = itertools.repeat(
-                '?' if param_style == 'qmark' else '%s',
-                len(seq))
+                "?" if param_style == "qmark" else "%s", len(seq)
+            )
     if placeholders is None:
         raise NotSupported(
-            "Param style '%s' does not support sequence type '%s'" % (
-                param_style, seq.__class__.__name__))
-    return ', '.join(placeholders)
+            "Param style '%s' does not support sequence type '%s'"
+            % (param_style, seq.__class__.__name__)
+        )
+    return ", ".join(placeholders)
 
 
 def null_logger(_stmt, _args):
@@ -993,15 +1005,17 @@ def make_file_object_logger(fh):
     """
     Make a logger that logs to the given file object.
     """
+
     def logger_func(stmt, args, fh=fh):
         """
         A logger that logs everything sent to a file object.
         """
         now = datetime.datetime.now()
-        six.print_("Executing (%s):" % now.isoformat(), file=fh)
-        six.print_(textwrap.dedent(stmt), file=fh)
-        six.print_("Arguments:", file=fh)
+        print("Executing (%s):" % now.isoformat(), file=fh)
+        print(textwrap.dedent(stmt), file=fh)
+        print("Arguments:", file=fh)
         pprint.pprint(args, fh)
+
     return logger_func
 
 
