@@ -6,7 +6,6 @@ from tests import fakedb, utils
 
 
 class TestPool(unittest.TestCase):
-
     def setUp(self):
         self.pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
 
@@ -45,7 +44,6 @@ class TestPool(unittest.TestCase):
 
 
 class TestPoolConcurrency(unittest.TestCase):
-
     def test_pool_contention(self):
         pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
         # Here, we're testing that the pool behaves properly when it hits its
@@ -89,26 +87,20 @@ class TestPoolConcurrency(unittest.TestCase):
 
 
 class TestPropagation(unittest.TestCase):
-
     def test_setting_propagation(self):
         pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
         try:
             self.assertTrue(pool.default_factory is dbkit.TupleFactory)
-            self.assertTrue(pool.logger is dbkit.null_logger)
             with pool.connect() as ctx:
                 self.assertTrue(ctx.default_factory is dbkit.TupleFactory)
-                self.assertTrue(ctx.logger is dbkit.null_logger)
         finally:
             pool.finalise()
 
         pool = dbkit.create_pool(fakedb, 1, fakedb.INVALID_CURSOR)
         try:
             self.assertTrue(pool.default_factory is dbkit.TupleFactory)
-            self.assertTrue(pool.logger is dbkit.null_logger)
             pool.default_factory = None
-            pool.logger = None
             with pool.connect() as ctx:
                 self.assertTrue(ctx.default_factory is None)
-                self.assertTrue(ctx.logger is None)
         finally:
             pool.finalise()

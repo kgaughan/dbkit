@@ -1,5 +1,4 @@
 import fnmatch
-import glob
 import os
 import os.path
 import unittest
@@ -11,7 +10,7 @@ def suite():
     """
     here = os.path.dirname(__file__)
     modules = [
-        'tests.' + os.path.splitext(fn)[0]
-        for fn in fnmatch.filter(os.listdir(here), 'test_*.py')
+        "tests." + os.path.splitext(fn)[0]
+        for fn in fnmatch.filter(os.listdir(here), "test_*.py")
     ]
     return unittest.defaultTestLoader.loadTestsFromNames(modules)

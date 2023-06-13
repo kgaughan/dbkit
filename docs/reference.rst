@@ -30,17 +30,6 @@ by the connection's database driver. For a list of these exceptions, see
       The factory function should take a cursor an return an iterable over the
       current resultset.
 
-   .. attribute:: logger
-
-      The function used for logging statements and their arguments.
-
-      The logging function should take two arguments: the query and a
-      sequence of query arguments.
-
-      There are two supplied logging functions: :py:func:`dbkit.null_logger`,
-      the default, logs nothing, while :py:func:`dbkit.stderr_logger` logs its
-      arguments to stderr.
-
 
 Exceptions
 ==========
@@ -111,25 +100,6 @@ for the result, which is passed in using the `factory` parameter.
 .. autofunction:: dbkit.dict_set
 
 .. autofunction:: dbkit.tuple_set
-
-
-Loggers
-=======
-
-Loggers are functions that you can assign to :py:attr:`dbkit.Context.logger` to
-have dbkit log any SQL statements ran or stored procedures called to some sink.
-dbkit comes with a number of simple loggers listed below. To create your own
-logger, simply create a function that takes two arguments, the first of which
-is the SQL statement or stored procedure name, and the second is a sequence of
-arguments that were passed with it.
-
-.. autofunction:: dbkit.null_logger
-
-.. autofunction:: dbkit.make_file_object_logger
-
-.. function:: dbkit.stderr_logger(stmt, args)
-
-   A logger that logs to standard error.
 
 
 Utilities
