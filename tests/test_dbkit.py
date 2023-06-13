@@ -39,14 +39,12 @@ class TestBasics(unittest.TestCase):
             self.assertTrue(isinstance(ctx, dbkit.Context))
 
     def test_bad_connect(self):
-        try:
+        with contextlib.suppress(sqlite3.OperationalError):
             with dbkit.connect(sqlite3, "/nonexistent.db") as ctx:
                 # Wouldn't do this in real code as the mediator is private.
                 with ctx.mdr:
                     pass
             self.fail("Should not have been able to open database.")
-        except sqlite3.OperationalError:
-            pass
 
     def test_context(self):
         self.assertTrue(dbkit.Context.current(with_exception=False) is None)
@@ -135,11 +133,9 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(len(result), 0)
 
     def test_to_dict_bad_key(self):
-        try:
+        with contextlib.suppress(KeyError):
             dbkit.to_dict("foo", [{"bar": "fred", "baz": "barney"}])
             self.fail("Expected KeyError")
-        except KeyError:
-            pass
 
     def test_to_dict_happy_path(self):
         row = {"bar": "fred", "baz": "barney"}
@@ -168,11 +164,9 @@ class TestBasics(unittest.TestCase):
 
     def test_make_placeholders_empty(self):
         with dbkit.connect(fakedb, "db"):
-            try:
+            with contextlib.suppress(ValueError):
                 dbkit.make_placeholders([])
                 self.fail("Expected ValueError")
-            except ValueError:
-                pass
 
     def test_make_placeholders_qmark(self):
         with utils.set_temporarily(fakedb, "paramstyle", "qmark"):
@@ -253,11 +247,9 @@ class TestAgainstDB(unittest.TestCase):
 
     def test_bad_drop_table(self):
         with self.ctx:
-            try:
+            with contextlib.suppress(self.ctx.OperationalError):
                 dbkit.execute("DROP TABLE kownturs")
                 self.fail("Should have triggered an exception.")
-            except self.ctx.OperationalError:
-                pass
 
     def test_transaction_decorator(self):
         @dbkit.transactional

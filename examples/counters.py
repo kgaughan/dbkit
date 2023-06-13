@@ -75,7 +75,7 @@ def print_help(filename, table, dest=sys.stdout):
     Print help to the given destination file object.
     """
     cmds = "|".join(sorted(table.keys()))
-    print("Syntax: %s %s [args]" % (path.basename(filename), cmds), file=dest)
+    print(f"Syntax: {path.basename(filename)} {cmds} [args]", file=dest)
 
 
 def dispatch(table, args):
