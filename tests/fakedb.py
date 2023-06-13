@@ -97,7 +97,7 @@ class Cursor:
         if not self.valid or not self.connection.valid:
             raise InterfaceError()
         self.result = None if len(args) == 0 else args
-        self.connection.session.append("proc:" + procname)
+        self.connection.session.append(f"proc:{procname}")
         self.connection.executed += 1
 
     def fetchone(self):

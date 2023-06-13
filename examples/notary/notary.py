@@ -118,7 +118,7 @@ class Frontpage(object):
         form = web.input(project="")
         with pool.connect():
             _, slug = add_project(form.project)
-        raise web.seeother(slug + "/")
+        raise web.seeother(f"{slug}/")
 
 
 class Project(object):
@@ -133,11 +133,11 @@ class Project(object):
     def POST(self, slug):
         form = web.input(note="")
         with pool.connect():
-            project = get_project(slug)
-            if not project:
+            if project := get_project(slug):
+                note_id = save_note(project.project_id, form.note)
+            else:
                 raise web.notfound("No such project.")
-            note_id = save_note(project.project_id, form.note)
-        raise web.seeother("#p" + str(note_id))
+        raise web.seeother(f"#p{str(note_id)}")
 
 
 if __name__ == "__main__":
