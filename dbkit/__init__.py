@@ -1,26 +1,19 @@
 """
-**dbkit** is a simple high-level database abstraction library for use on
-top of DB-API 2 compatible database driver modules. It is intended to be
-used in circumstances where it would be impractical or overkill to use an
-ORM such as SQLAlchemy or SQLObject, but would be useful to abstract away
-much of the boilerplate involved in dealing with DB-API 2 compatible
-database drivers.
+**dbkit** is a simple high-level database abstraction library for use on top of
+DB-API 2 compatible database driver modules. It is intended to be used in
+circumstances where it would be impractical or overkill to use an ORM such as
+SQLAlchemy or SQLObject, but would be useful to abstract away much of the
+boilerplate involved in dealing with DB-API 2 compatible database drivers.
 """
 
 from __future__ import print_function
 
 import collections
 import contextlib
-import datetime
 import functools
 import itertools
-import pprint
 import sys
-import textwrap
 import threading
-
-import pkg_resources
-
 
 __all__ = (
     "NoContext",
@@ -42,19 +35,9 @@ __all__ = (
     "query_proc_column",
     "DictFactory",
     "TupleFactory",
-    "make_file_object_logger",
-    "null_logger",
-    "stderr_logger",
 )
 
-__version__ = pkg_resources.get_distribution("dbkit").version
-
-
-# Python 3 hack.
-try:
-    xrange
-except:
-    xrange = range
+__version__ = "0.2.5"
 
 
 # DB-API 2 exceptions exposed by all drivers.
@@ -96,7 +79,7 @@ class _ContextStack(threading.local):
     """
 
     def __init__(self):
-        super(_ContextStack, self).__init__()
+        super().__init__()
         self.stack = []
 
     def push(self, ctx):
@@ -121,7 +104,7 @@ class _ContextStack(threading.local):
         return len(self.stack)
 
 
-class Context(object):
+class Context:
     """
     A database connection context.
     """
@@ -129,7 +112,6 @@ class Context(object):
     __slots__ = _EXCEPTIONS + (
         "mdr",
         "_depth",
-        "logger",
         "default_factory",
         "param_style",
         "last_row_count",
@@ -142,10 +124,8 @@ class Context(object):
         """
         Initialise a context with a given driver module and connection.
         """
-        super(Context, self).__init__()
         self.mdr = mdr
         self._depth = 0
-        self.logger = null_logger
         self.default_factory = TupleFactory
         self.last_row_count = None
         self.last_row_id = None
@@ -173,20 +153,20 @@ class Context(object):
     @contextlib.contextmanager
     def transaction(self):
         """
-        Sets up a context where all the statements within it are ran within
-        a single database transaction. For internal use only.
+        Sets up a context where all the statements within it are ran within a
+        single database transaction. For internal use only.
         """
-        # The idea here is to fake the nesting of transactions. Only when
-        # we've gotten back to the topmost transaction context do we actually
-        # commit or rollback.
+        # The idea here is to fake the nesting of transactions. Only when we've
+        # gotten back to the topmost transaction context do we actually commit
+        # or rollback.
         with self.mdr:
             try:
                 self._depth += 1
                 yield self
                 self._depth -= 1
             except self.mdr.OperationalError:
-                # We've lost the connection, so there's no sense in
-                # attempting to roll back back the transaction.
+                # We've lost the connection, so there's no sense in attempting
+                # to roll back back the transaction.
                 self._depth -= 1
                 raise
             except:
@@ -219,17 +199,14 @@ class Context(object):
         """
         Execute a statement, returning a cursor. For internal use only.
         """
-        self.logger(stmt, args)
         with self.cursor() as cursor:
             cursor.execute(stmt, args)
             return cursor
 
     def execute_proc(self, procname, args):
         """
-        Execute a stored procedure, returning a cursor. For internal use
-        only.
+        Execute a stored procedure, returning a cursor. For internal use only.
         """
-        self.logger(procname, args)
         with self.cursor() as cursor:
             cursor.callproc(procname, args)
             return cursor
@@ -238,7 +215,6 @@ class Context(object):
         """
         Close the connection this context wraps.
         """
-        self.logger = None
         for exc in _EXCEPTIONS:
             setattr(self, exc, None)
         try:
@@ -248,22 +224,20 @@ class Context(object):
 
 
 # pylint: disable-msg=R0903
-class ConnectionMediatorBase(object):
+class ConnectionMediatorBase:
     """
     Mediates connection acquisition and release from/to a pool.
 
     Implementations should keep track of the times they've been entered and
-    exited, incrementing a counter for the former and decrementing it for
-    the latter. They should acquire a connection when entered with a
-    counter value of 0 and release it when exited with a counter value of
-    0.
+    exited, incrementing a counter for the former and decrementing it for the
+    latter. They should acquire a connection when entered with a counter value
+    of 0 and release it when exited with a counter value of 0.
     """
 
     __slots__ = ("OperationalError", "InterfaceError", "DatabaseError", "conn", "depth")
 
     # pylint: disable-msg=C0103
     def __init__(self, exceptions):
-        super(ConnectionMediatorBase, self).__init__()
         self.OperationalError = exceptions.OperationalError
         self.InterfaceError = exceptions.InterfaceError
         self.DatabaseError = exceptions.DatabaseError
@@ -311,7 +285,7 @@ class SingleConnectionMediator(ConnectionMediatorBase):
     __slots__ = ("connect",)
 
     def __init__(self, module, connect_):
-        super(SingleConnectionMediator, self).__init__(module)
+        super().__init__(module)
         self.connect = connect_
 
     def __enter__(self):
@@ -351,7 +325,7 @@ class PooledConnectionMediator(ConnectionMediatorBase):
     __slots__ = ("pool",)
 
     def __init__(self, pool):
-        super(PooledConnectionMediator, self).__init__(pool)
+        super().__init__(pool)
         self.pool = pool
 
     def __enter__(self):
@@ -397,22 +371,20 @@ class PooledConnectionMediator(ConnectionMediatorBase):
         pass
 
 
-# pylint: disable-msg=R0922
-class PoolBase(object):
+class PoolBase:
     """
     Abstract base class for all connection pools.
     """
 
-    __slots__ = _EXCEPTIONS + ("module", "logger", "default_factory", "_connect")
+    __slots__ = _EXCEPTIONS + ("module", "default_factory", "_connect")
 
     def __init__(self, module, threadsafety, args, kwargs):
         if not hasattr(module, "threadsafety"):
             raise NotSupported("Cannot determine driver threadsafety.")
         if module.threadsafety < threadsafety:
             raise NotSupported("Driver is not sufficiently threadsafe.")
-        super(PoolBase, self).__init__()
+        super().__init__()
         self.module = module
-        self.logger = null_logger
         self.default_factory = TupleFactory
         self._connect = _make_connect(module, args, kwargs)
         for exc in _EXCEPTIONS:
@@ -444,8 +416,8 @@ class PoolBase(object):
 
     def finalise(self):
         """
-        Shut this pool down. Call this or have it called when you're
-        finished with the pool.
+        Shut this pool down. Call this or have it called when you're finished
+        with the pool.
 
         Please note that it is only guaranteed to complete after all
         connections have been returned to the pool for finalisation.
@@ -463,15 +435,13 @@ class PoolBase(object):
         Returns a context that uses this pool as a connection source.
         """
         ctx = Context(self.module, self.create_mediator())
-        ctx.logger = self.logger
         ctx.default_factory = self.default_factory
         return ctx
 
-    # pylint: disable-msg=R0201
     def get_max_reattempts(self):
         """
-        Number of times this pool should be reattempted when attempting to
-        get a fresh connection.
+        Number of times this pool should be reattempted when attempting to get
+        a fresh connection.
         """
         return 1
 
@@ -484,7 +454,7 @@ class Pool(PoolBase):
     __slots__ = ("_pool", "_cond", "_max_conns", "_allocated")
 
     def __init__(self, module, max_conns, *args, **kwargs):
-        super(Pool, self).__init__(module, 2, args, kwargs)
+        super().__init__(module, 2, args, kwargs)
         self._pool = collections.deque()
         self._cond = threading.Condition()
         self._max_conns = max_conns
@@ -497,16 +467,15 @@ class Pool(PoolBase):
                 if len(self._pool) > 0:
                     conn = self._pool.popleft()
                     break
-                elif self._allocated < self._max_conns:
-                    # XXX If the user didn't pass in enough arguments for
-                    # the connect function, this will throw a TypeError.
-                    # It would probably be wise to catch this and convert
-                    # the error to something more apt.
+                if self._allocated < self._max_conns:
+                    # XXX If the user didn't pass in enough arguments for the
+                    # connect function, this will throw a TypeError. It would
+                    # probably be wise to catch this and convert the error to
+                    # something more apt.
                     conn = self._connect()
                     self._allocated += 1
                     break
-                else:
-                    self._cond.wait()
+                self._cond.wait()
         finally:
             self._cond.release()
         return conn
@@ -524,9 +493,9 @@ class Pool(PoolBase):
 
     def finalise(self):
         self._cond.acquire()
-        # This is a terribly naive way to wait until all connections have
-        # been returned to the pool. That said, if it *doesn't* work, then
-        # there's something very odd going on with the client.
+        # This is a terribly naive way to wait until all connections have been
+        # returned to the pool. That said, if it *doesn't* work, then there's
+        # something very odd going on with the client.
         while len(self._pool) < self._allocated:
             self._cond.wait()
         for conn in self._pool:
@@ -536,21 +505,21 @@ class Pool(PoolBase):
         self._cond.release()
 
     def get_max_reattempts(self):
-        # We retry one extra time to ensure that if the pool is exhausted,
-        # we create a fresh connection instead.
+        # We retry one extra time to ensure that if the pool is exhausted, we
+        # create a fresh connection instead.
         return self._max_conns + 1
 
 
 class DummyPool(PoolBase):
     """
-    A dummy pool that creates a new connection on each acquire and closes
-    it upon release.
+    A dummy pool that creates a new connection on each acquire and closes it
+    upon release.
     """
 
     __slots__ = ()
 
     def __init__(self, module, *args, **kwargs):
-        super(DummyPool, self).__init__(module, 1, args, kwargs)
+        super().__init__(module, 1, args, kwargs)
 
     def acquire(self):
         return self._connect()
@@ -571,18 +540,17 @@ class DummyPool(PoolBase):
 
 def _make_connect(module, args, kwargs):
     """
-    Returns a function capable of making connections with a particular
-    driver given the supplied credentials.
+    Returns a function capable of making connections with a particular driver
+    given the supplied credentials.
     """
-    # pylint: disable-msg=W0142
     return functools.partial(module.connect, *args, **kwargs)
 
 
 def connect(module, *args, **kwargs):
     """
-    Connect to a database using the given DB-API driver module. Returns
-    a database context representing that connection. Any arguments or
-    keyword arguments are passed the module's :py:func:`connect` function.
+    Connect to a database using the given DB-API driver module. Returns a
+    database context representing that connection. Any arguments or keyword
+    arguments are passed the module's :py:func:`connect` function.
     """
     mdr = SingleConnectionMediator(module, _make_connect(module, args, kwargs))
     return Context(module, mdr)
@@ -649,8 +617,8 @@ def transaction():
 
 def transactional(wrapped):
     """
-    A decorator to denote that the content of the decorated function or
-    method is to be ran in a transaction.
+    A decorator to denote that the content of the decorated function or method
+    is to be ran in a transaction.
 
     The following code is equivalent to the example for
     :py:func:`dbkit.transaction`::
@@ -682,6 +650,7 @@ def transactional(wrapped):
                 "UPDATE pages SET owner_id = ? WHERE page_id = ?",
                 (new_owner_id, page_id))
     """
+
     # pylint: disable-msg=C0111
     def wrapper(*args, **kwargs):
         with Context.current().transaction():
@@ -730,9 +699,9 @@ def query_row(stmt, args=(), factory=None):
 
 def query_value(stmt, args=(), default=None):
     """
-    Execute a query, returning the first value in the first row of the
-    result set. If the query returns no result set, a default value is
-    returned, which is `None` by default.
+    Execute a query, returning the first value in the first row of the result
+    set. If the query returns no result set, a default value is returned, which
+    is `None` by default.
     """
     for row in query(stmt, args, TupleFactory):
         return row[0]
@@ -770,8 +739,8 @@ def query_proc(procname, args=(), factory=None):
 
 def query_proc_row(procname, args=(), factory=None):
     """
-    Execute a stored procedure. Returns the first row of the result set,
-    or `None`.
+    Execute a stored procedure. Returns the first row of the result set, or
+    `None`.
     """
     for row in query_proc(procname, args, factory):
         return row
@@ -780,9 +749,9 @@ def query_proc_row(procname, args=(), factory=None):
 
 def query_proc_value(procname, args=(), default=None):
     """
-    Execute a stored procedure, returning the first value in the first row
-    of the result set. If it returns no result set, a default value is
-    returned, which is `None` by default.
+    Execute a stored procedure, returning the first value in the first row of
+    the result set. If it returns no result set, a default value is returned,
+    which is `None` by default.
     """
     for row in query_proc(procname, args, TupleFactory):
         return row[0]
@@ -804,7 +773,7 @@ class FactoryBase:
     __slots__ = ("cursor", "mdr")
 
     def __init__(self, cursor, mdr):
-        super(FactoryBase, self).__init__()
+        super().__init__()
         self.cursor = cursor
         self.mdr = mdr
         self.mdr.__enter__()
@@ -812,7 +781,6 @@ class FactoryBase:
     def __del__(self):
         self.close()
 
-    # pylint: disable=W0702,W0142
     def close(self):
         """
         Release all resources associated with this factory.
@@ -872,7 +840,7 @@ class DictFactory(FactoryBase):
     __slots__ = ("columns",)
 
     def __init__(self, cursor, mdr):
-        super(DictFactory, self).__init__(cursor, mdr)
+        super().__init__(cursor, mdr)
         self.columns = [col[0] for col in cursor.description]
 
     def fetch(self):
@@ -926,7 +894,7 @@ class AttrDict(dict):
         try:
             return self[key]
         except KeyError as exc:
-            raise AttributeError(exc)
+            raise AttributeError(f"Unknown field: {key}") from exc
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -935,7 +903,7 @@ class AttrDict(dict):
         try:
             del self[key]
         except KeyError as exc:
-            raise AttributeError(exc)
+            raise AttributeError(f"Unknown field: {key}") from exc
 
     def __repr__(self):
         return "<AttrDict " + dict.__repr__(self) + ">"
@@ -981,7 +949,7 @@ def make_placeholders(seq, start=1):
             placeholders = (template % key for key in seq.keys())
     elif isinstance(seq, (list, tuple)):
         if param_style == "numeric":
-            placeholders = (":%d" % i for i in xrange(start, start + len(seq)))
+            placeholders = (":%d" % i for i in range(start, start + len(seq)))
         elif param_style in ("qmark", "format", "pyformat"):
             placeholders = itertools.repeat(
                 "?" if param_style == "qmark" else "%s", len(seq)
@@ -993,33 +961,5 @@ def make_placeholders(seq, start=1):
         )
     return ", ".join(placeholders)
 
-
-def null_logger(_stmt, _args):
-    """
-    A logger that discards everything sent to it.
-    """
-    pass
-
-
-def make_file_object_logger(fh):
-    """
-    Make a logger that logs to the given file object.
-    """
-
-    def logger_func(stmt, args, fh=fh):
-        """
-        A logger that logs everything sent to a file object.
-        """
-        now = datetime.datetime.now()
-        print("Executing (%s):" % now.isoformat(), file=fh)
-        print(textwrap.dedent(stmt), file=fh)
-        print("Arguments:", file=fh)
-        pprint.pprint(args, fh)
-
-    return logger_func
-
-
-# pylint:disable-msg=C0103
-stderr_logger = make_file_object_logger(sys.stderr)
 
 # vim:set et ai:

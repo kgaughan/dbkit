@@ -1,18 +1,12 @@
-import web
 import psycopg2
 import pystache
-from dbkit import (
-    dict_set,
-    execute,
-    Pool,
-    query,
-    query_value,
-    transactional,
-)
+import web
 
+from dbkit import Pool, dict_set, execute, query, query_value, transactional
 
 urls = (
-    '/(.*)', 'hello',
+    "/(.*)",
+    "hello",
 )
 app = web.application(urls, globals())
 pool = Pool(psycopg2, 2, "dbname=namecounter user=keith")
@@ -47,19 +41,18 @@ def get_names():
     return query("SELECT name, n FROM greeted ORDER BY n", factory=dict_set)
 
 
-class hello(object):
-
+class hello:
     def GET(self, name):
         ctx = pool.connect()
         if not name:
-            name = 'World'
+            name = "World"
         with ctx:
             hellos = list(get_names())
             save_name(name)
-        return pystache.render(TEMPLATE, {'name': name, 'hellos': hellos})
+        return pystache.render(TEMPLATE, {"name": name, "hellos": hellos})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         app.run()
     finally:

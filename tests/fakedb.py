@@ -3,26 +3,26 @@ A fake DB-API 2 driver.
 """
 
 # DB names used to trigger certain behaviours.
-INVALID_DB = 'invalid-db'
-INVALID_CURSOR = 'invalid-cursor'
-HAPPY_OUT = 'happy-out'
+INVALID_DB = "invalid-db"
+INVALID_CURSOR = "invalid-cursor"
+HAPPY_OUT = "happy-out"
 
-apilevel = '2.0'
+apilevel = "2.0"
 threadsafety = 2
-paramstyle = 'qmark'
+paramstyle = "qmark"
 
 
 def connect(database):
     return Connection(database)
 
 
-class Connection(object):
+class Connection:
     """
     A fake connection.
     """
 
     def __init__(self, database):
-        super(Connection, self).__init__()
+        super().__init__()
         self.database = database
         self.session = []
         self.cursors = set()
@@ -38,24 +38,24 @@ class Connection(object):
         self.valid = False
         for cursor in self.cursors:
             cursor.close()
-        self.session.append('close')
+        self.session.append("close")
         if self.database == INVALID_DB:
             raise OperationalError()
 
     def commit(self):
-        self.session.append('commit')
+        self.session.append("commit")
 
     def rollback(self):
-        self.session.append('rollback')
+        self.session.append("rollback")
 
     def cursor(self):
-        self.session.append('cursor')
+        self.session.append("cursor")
         if not self.valid:
             raise InterfaceError()
         return Cursor(self)
 
 
-class Cursor(object):
+class Cursor:
     """
     A fake cursor.
     """
@@ -71,7 +71,7 @@ class Cursor(object):
         self.rowcount = -1
 
     def close(self):
-        self.connection.session.append('cursor-close')
+        self.connection.session.append("cursor-close")
         if not self.valid:
             raise InterfaceError("Cursor is closed")
         self.connection.cursors.remove(self)
@@ -82,11 +82,11 @@ class Cursor(object):
             raise InterfaceError()
         stmt = stmt.lstrip().lower()
         # It's the ping!
-        if stmt == 'select 1':
+        if stmt == "select 1":
             return self
-        stmt_type, = stmt.split(' ', 1)
-        if stmt_type in ('select', 'update', 'insert', 'delete'):
-            self.result = None if args is () else args
+        (stmt_type,) = stmt.split(" ", 1)
+        if stmt_type in ("select", "update", "insert", "delete"):
+            self.result = None if args == () else args
             self.connection.session.append(stmt_type)
             self.connection.executed += 1
         else:
@@ -97,7 +97,7 @@ class Cursor(object):
         if not self.valid or not self.connection.valid:
             raise InterfaceError()
         self.result = None if len(args) == 0 else args
-        self.connection.session.append('proc:' + procname)
+        self.connection.session.append(f"proc:{procname}")
         self.connection.executed += 1
 
     def fetchone(self):
