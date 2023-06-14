@@ -2,7 +2,7 @@ import psycopg2
 import pystache
 import web
 
-from dbkit import Pool, dict_set, execute, query, query_value, transactional
+from dbkit import dict_set, execute, Pool, query, query_value, transactional
 
 urls = (
     "/(.*)",

@@ -60,11 +60,9 @@ class TestBasics(unittest.TestCase):
             self.assertTrue(dbkit.Context.current(with_exception=False) is ctx)
             self.assertTrue(ctx.mdr is not None)
         ctx.close()
-        try:
+        with contextlib.suppress(Exception):
             dbkit.context()
             self.fail("Should not have been able to access context.")
-        except:
-            pass
         self.assertTrue(ctx.mdr is None)
         self.assertEqual(len(ctx.stack), 0)
 
@@ -96,9 +94,9 @@ class TestBasics(unittest.TestCase):
             try:
                 with dbkit.transaction():
                     dbkit.execute(UPDATE_COUNTER, (13, "foo"))
-                    raise dbkit.AbortTransaction()
+                    raise dbkit.AbortTransactionError()
                 self.fail("Should've raised an exception.")
-            except dbkit.AbortTransaction:
+            except dbkit.AbortTransactionError:
                 exception_caught = True
             self.assertTrue(exception_caught)
             self.assertEqual(dbkit.query_value(GET_COUNTER, ("foo",)), 42)
@@ -209,8 +207,8 @@ class TestBasics(unittest.TestCase):
             with dbkit.connect(fakedb, "db"):
                 try:
                     dbkit.make_placeholders({"foo": None})
-                    self.assertFail("Should've got 'NotSupported' exception.")
-                except dbkit.NotSupported as exc:
+                    self.assertFail("Should've gotten 'NotSupportedError'.")
+                except dbkit.NotSupportedError as exc:
                     self.assertEqual(
                         str(exc),
                         "Param style 'qmark' does not support sequence type 'dict'",
@@ -221,8 +219,8 @@ class TestBasics(unittest.TestCase):
             with dbkit.connect(fakedb, "db"):
                 try:
                     dbkit.make_placeholders(["foo"])
-                    self.fail("Should've got 'NotSupported' exception.")
-                except dbkit.NotSupported as exc:
+                    self.fail("Should've gotten 'NotSupportedError'.")
+                except dbkit.NotSupportedError as exc:
                     self.assertEqual(
                         str(exc),
                         "Param style 'named' does not support sequence type 'list'",
@@ -255,13 +253,13 @@ class TestAgainstDB(unittest.TestCase):
         @dbkit.transactional
         def update_counter_and_fail(name, value):
             dbkit.execute(UPDATE_COUNTER, (value, name))
-            raise dbkit.AbortTransaction()
+            raise dbkit.AbortTransactionError()
 
         with self.ctx:
             exception_caught = False
             try:
                 update_counter_and_fail("foo", 13)
-            except dbkit.AbortTransaction:
+            except dbkit.AbortTransactionError:
                 exception_caught = True
             self.assertTrue(exception_caught)
             self.assertEqual(dbkit.query_value(GET_COUNTER, ("foo",)), 42)

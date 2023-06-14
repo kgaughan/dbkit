@@ -1,4 +1,0 @@
-include LICENSE ChangeLog
-recursive-include docs *.rst *.py
-recursive-include tests *.py
-recursive-include examples *.py *.sql

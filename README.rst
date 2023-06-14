@@ -12,7 +12,7 @@ Here's an example::
 
     with connect(sqlite3, 'counters.db') as ctx, closing(ctx):
         for counter, value in query('SELECT counter, value FROM counters'):
-            print "%s: %d" % (counter, value)
+            print(f"{counter}: {value}")
 
 Overview
 ========

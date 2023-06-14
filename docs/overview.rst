@@ -57,7 +57,7 @@ query a database table, and print out its contents with `dbkit`::
 
     with connect(sqlite3, 'counters.db') as ctx, closing(ctx):
         for counter, value in query('SELECT counter, value FROM counters'):
-            print "%s: %d" % (counter, value)
+            print(f"{counter}: {value}")
 
 And here's how you'd so it with a DB-API 2 (using *just* :pep:`249`, no
 driver-specific extensions)::
@@ -72,7 +72,7 @@ driver-specific extensions)::
                 row = cur.fetchone()
                 if row is None:
                     break
-                print "%s: %d" % row
+                print("%s: %d" % row)
 
 
 Download

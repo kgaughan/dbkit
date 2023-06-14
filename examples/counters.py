@@ -7,8 +7,7 @@ from os import path
 import sqlite3
 import sys
 
-from dbkit import (connect, execute, query, query_column, query_value,
-                   transactional)
+from dbkit import connect, execute, query, query_column, query_value, transactional
 
 
 def get_counter(counter):
@@ -67,7 +66,7 @@ def print_counters_and_values():
     List all the counters and their values.
     """
     for counter, value in dump_counters():
-        print("%s: %d" % (counter, value))
+        print(f"{counter}: {value}")
 
 
 def print_help(filename, table, dest=sys.stdout):
