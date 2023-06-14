@@ -60,11 +60,9 @@ class TestBasics(unittest.TestCase):
             self.assertTrue(dbkit.Context.current(with_exception=False) is ctx)
             self.assertTrue(ctx.mdr is not None)
         ctx.close()
-        try:
+        with contextlib.suppress(Exception):
             dbkit.context()
             self.fail("Should not have been able to access context.")
-        except Exception:
-            pass
         self.assertTrue(ctx.mdr is None)
         self.assertEqual(len(ctx.stack), 0)
 
