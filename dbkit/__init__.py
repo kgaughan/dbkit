@@ -382,7 +382,6 @@ class PoolBase:
             raise NotSupportedError("Cannot determine driver threadsafety.")
         if module.threadsafety < threadsafety:
             raise NotSupportedError("Driver is not sufficiently threadsafe.")
-        super().__init__()
         self.module = module
         self.default_factory = TupleFactory
         self._connect = _make_connect(module, args, kwargs)
@@ -567,7 +566,7 @@ def create_pool(module, max_conns, *args, **kwargs):
         return Pool(module, max_conns, *args, **kwargs)
     if module.threadsafety >= 1:
         return DummyPool(module, *args, **kwargs)
-    raise ValueError("Bad threadsafety level: %d" % module.threadsafety)
+    raise ValueError(f"Bad threadsafety level: {module.threadsafety}")
 
 
 def context():
@@ -772,7 +771,6 @@ class FactoryBase:
     __slots__ = ("cursor", "mdr")
 
     def __init__(self, cursor, mdr):
-        super().__init__()
         self.cursor = cursor
         self.mdr = mdr
         self.mdr.__enter__()
@@ -946,7 +944,7 @@ def make_placeholders(seq, start=1):
             placeholders = (template % key for key in seq.keys())
     elif isinstance(seq, (list, tuple)):
         if param_style == "numeric":
-            placeholders = (":%d" % i for i in range(start, start + len(seq)))
+            placeholders = (f":{i}" for i in range(start, start + len(seq)))
         elif param_style in ("qmark", "format", "pyformat"):
             placeholders = itertools.repeat(
                 "?" if param_style == "qmark" else "%s", len(seq)

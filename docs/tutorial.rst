@@ -115,7 +115,7 @@ like so::
 
     def print_counters_and_values():
         for row in dump_counters_dict():
-            print '%s: %d' % (row['counter'], row['value'])
+            print(f"{row['counter']}: {row['value']}")
 
 Now we have enough for our counter management application, so lets start
 on the main function. We'll have the following subcommands: `set`, `get`,

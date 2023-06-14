@@ -66,7 +66,7 @@ def print_counters_and_values():
     List all the counters and their values.
     """
     for counter, value in dump_counters():
-        print("%s: %d" % (counter, value))
+        print(f"{counter}: {value}")
 
 
 def print_help(filename, table, dest=sys.stdout):
