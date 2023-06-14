@@ -875,11 +875,6 @@ class ColumnFactory(FactoryBase):
         return row[0]
 
 
-# For backwards compatibility
-dict_set = DictFactory  # pylint: disable=C0103
-tuple_set = TupleFactory  # pylint: disable=C0103
-
-
 class AttrDict(dict):
     """
     A dict whose elements may be accessed like object attributes.

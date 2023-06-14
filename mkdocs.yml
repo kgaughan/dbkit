@@ -1,0 +1,43 @@
+site_name: dbkit
+copyright: "Copyright © Keith Gaughan, 2016"
+
+repo_name: Edit this site
+repo_url: https://github.com/kgaughan/dbkit/
+edit_uri: blob/master/docs/
+
+theme:
+  name: material
+
+plugins:
+  - mkdocstrings:
+      watch:
+        - dbkit
+      default_handler: python
+      handlers:
+        python:
+          options:
+            heading_level: 3
+            docstring_style: sphinx
+            show_root_heading: true
+            show_signature: true
+            separate_signature: false
+            show_signature_annotations: true
+            show_source: false
+  - redirects:
+      redirect_maps: {}
+  - search
+
+markdown_extensions:
+  - admonition
+  - smarty
+  - sane_lists
+  - attr_list
+
+nav:
+  - Home: index.md
+  - overview.md
+  - tutorial.md
+  - examples.md
+  - philosophy.md
+  - reference.md
+  - changelog.md
