@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "dbkit"
 dynamic = ["version"]
 description = "DB-API made easier"
+readme = "README.rst"
 license = "MIT"
 authors = [
     { name = "Keith Gaughan", email = "k@stereochro.me" },
@@ -29,3 +30,84 @@ Homepage = "https://github.com/kgaughan/dbkit/"
 
 [tool.hatch.version]
 path = "dbkit/__init__.py"
+
+[tool.hatch.build]
+exclude = [
+	".coveragerc",
+	".gitignore",
+	".readthedocs.yaml",
+	"Makefile",
+	"TODO",
+	"tox.ini",
+	"docs/",
+	"examples/",
+	"tests/",
+]
+
+[tool.hatch.envs.test]
+dependencies = [
+	"pytest>=7.2.0",
+	"pytest-cov>=2.12.1",
+]
+
+[tool.hatch.envs.test.scripts]
+unit = [
+	"pytest",
+]
+
+[tool.hatch.envs.style]
+dependencies = [
+	"black~=22.12.0",
+	"coverage~=5.5",
+	"flake8~=5.0.4",
+	"flake8-bugbear~=22.12.6",
+	"isort~=5.11.4",
+	"pep8-naming~=0.13.3",
+	"pylint~=2.15.9",
+	"mypy~=0.991",
+]
+
+[tool.hatch.envs.style.scripts]
+check = [
+	"flake8 --max-line-length=120 --ignore=E203,W503 .",
+	"black --check --diff .",
+	"isort --check-only --diff .",
+	"pylint dbkit",
+	"mypy .",
+]
+fmt = [
+	"isort .",
+	"black .",
+]
+
+[tool.isort]
+profile = "black"
+force_sort_within_sections = true
+include_trailing_comma = true
+order_by_type = false
+
+[tool.pylint.BASIC]
+# Good variable names which should always be accepted, separated by a comma
+good-names = "n,i,j,k,_,fh,fd,fn,ip,cb,ts,ch,dt,tz,db,md,al,ns,s"
+max-line-length = "120"
+exclude-protected = "_flatten"
+# There something broken with the import checks with this module. I think it's
+# because it contains a wildcard imporot from a C module.
+ignored-modules = "sqlite3"
+extension-pkg-allow-list = "fcntl"
+
+[tool.pylint."MESSAGE CONTROL"]
+disable = "R,C0114,C0115,C0116,raise-missing-from"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --cov=dbkit --junitxml=tests/results.xml --cov-report html"
+testpaths = [
+    "tests",
+]
+junit_suite_name = "dbkit"
+junit_logging = "out-err"
+junit_family = "xunit2"
+
+[tool.mypy]
+ignore_missing_imports = true

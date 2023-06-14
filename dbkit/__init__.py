@@ -16,9 +16,9 @@ import sys
 import threading
 
 __all__ = (
-    "NoContext",
-    "NotSupported",
-    "AbortTransaction",
+    "NoContextError",
+    "NotSupportedError",
+    "AbortTransactionError",
     "PoolBase",
     "Pool",
     "connect",
@@ -42,7 +42,6 @@ __version__ = "0.2.5"
 
 # DB-API 2 exceptions exposed by all drivers.
 _EXCEPTIONS = (
-    "Warning",
     "Error",
     "InterfaceError",
     "DatabaseError",
@@ -55,19 +54,19 @@ _EXCEPTIONS = (
 )
 
 
-class NoContext(Exception):
+class NoContextError(Exception):
     """
     You are attempting to use dbkit outside of a database context.
     """
 
 
-class NotSupported(Exception):
+class NotSupportedError(Exception):
     """
     You are attempting something unsupported.
     """
 
 
-class AbortTransaction(Exception):
+class AbortTransactionError(Exception):
     """
     Raised to signal that code within the transaction wants to abort it.
     """
@@ -147,7 +146,7 @@ class Context:
         Returns the current database context.
         """
         if with_exception and len(cls.stack) == 0:
-            raise NoContext()
+            raise NoContextError()
         return cls.stack.top()
 
     @contextlib.contextmanager
@@ -169,7 +168,7 @@ class Context:
                 # to roll back back the transaction.
                 self._depth -= 1
                 raise
-            except:
+            except Exception:
                 self._depth -= 1
                 if self._depth == 0:
                     self.mdr.rollback()
@@ -189,7 +188,7 @@ class Context:
                 if cursor.rowcount != -1:
                     self.last_row_count = cursor.rowcount
                 self.last_row_id = getattr(cursor, "lastrowid", None)
-            except:
+            except Exception:
                 self.last_row_count = None
                 self.last_row_id = None
                 _safe_close(cursor)
@@ -380,9 +379,9 @@ class PoolBase:
 
     def __init__(self, module, threadsafety, args, kwargs):
         if not hasattr(module, "threadsafety"):
-            raise NotSupported("Cannot determine driver threadsafety.")
+            raise NotSupportedError("Cannot determine driver threadsafety.")
         if module.threadsafety < threadsafety:
-            raise NotSupported("Driver is not sufficiently threadsafe.")
+            raise NotSupportedError("Driver is not sufficiently threadsafe.")
         super().__init__()
         self.module = module
         self.default_factory = TupleFactory
@@ -561,7 +560,7 @@ def create_pool(module, max_conns, *args, **kwargs):
     Create a connection pool appropriate to the driver module's capabilities.
     """
     if not hasattr(module, "threadsafety"):
-        raise NotSupported("Cannot determine driver threadsafety.")
+        raise NotSupportedError("Cannot determine driver threadsafety.")
     if max_conns < 1:
         raise ValueError("Minimum number of connections is 1.")
     if module.threadsafety >= 2:
@@ -790,12 +789,12 @@ class FactoryBase:
         exc = (None, None, None)
         try:
             self.cursor.close()
-        except:
+        except Exception:
             exc = sys.exc_info()
         try:
             if self.mdr.__exit__(*exc):
                 exc = (None, None, None)
-        except:
+        except Exception:
             exc = sys.exc_info()
         self.mdr = None
         self.cursor = None
@@ -821,7 +820,7 @@ class FactoryBase:
         """
         try:
             return self.fetch()
-        except:
+        except Exception:
             self.close()
             raise
 
@@ -924,7 +923,7 @@ def _safe_close(obj):
     # pylint: disable-msg=W0702
     try:
         obj.close()
-    except:  # pragma: no cover
+    except Exception:  # pragma: no cover
         pass
 
 
@@ -955,7 +954,7 @@ def make_placeholders(seq, start=1):
                 "?" if param_style == "qmark" else "%s", len(seq)
             )
     if placeholders is None:
-        raise NotSupported(
+        raise NotSupportedError(
             "Param style '%s' does not support sequence type '%s'"
             % (param_style, seq.__class__.__name__)
         )

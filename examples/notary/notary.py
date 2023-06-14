@@ -15,9 +15,9 @@ import sqlite3
 import unicodedata
 
 import creole
-import dbkit
 import web
 
+import dbkit
 
 urls = (
     "/",
@@ -38,7 +38,7 @@ def strip_accents(s):
     """
     Strip accents to prepare for slugification.
     """
-    nfkd = unicodedata.normalize("NFKD", unicode(s))
+    nfkd = unicodedata.normalize("NFKD", s)
     return "".join(ch for ch in nfkd if not unicodedata.combining(ch))
 
 

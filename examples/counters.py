@@ -7,8 +7,7 @@ from os import path
 import sqlite3
 import sys
 
-from dbkit import (connect, execute, query, query_column, query_value,
-                   transactional)
+from dbkit import connect, execute, query, query_column, query_value, transactional
 
 
 def get_counter(counter):
