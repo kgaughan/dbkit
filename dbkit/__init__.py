@@ -905,7 +905,7 @@ class AttrDict(dict):
             raise AttributeError(f"Unknown field: {key}") from exc
 
     def __repr__(self):
-        return "<AttrDict " + dict.__repr__(self) + ">"
+        return f"<AttrDict {dict.__repr__(self)}>"
 
 
 def _ping(cursor):
@@ -921,17 +921,15 @@ def _safe_close(obj):
     Call the close method on an object safely.
     """
     # pylint: disable-msg=W0702
-    try:
+    with contextlib.suppress(Exception):
         obj.close()
-    except Exception:  # pragma: no cover
-        pass
 
 
 def to_dict(key, resultset):
     """
     Convert a resultset into a dictionary keyed off of one of its columns.
     """
-    return dict((row[key], row) for row in resultset)
+    return {row[key]: row for row in resultset}
 
 
 def make_placeholders(seq, start=1):
@@ -955,8 +953,7 @@ def make_placeholders(seq, start=1):
             )
     if placeholders is None:
         raise NotSupportedError(
-            "Param style '%s' does not support sequence type '%s'"
-            % (param_style, seq.__class__.__name__)
+            f"Param style '{param_style}' does not support sequence type '{seq.__class__.__name__}'"
         )
     return ", ".join(placeholders)
 
