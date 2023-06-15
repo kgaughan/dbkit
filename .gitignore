@@ -20,3 +20,4 @@ __pycache__
 .DS_Store
 /tests/results.xml
 /site/
+*.sqlite
