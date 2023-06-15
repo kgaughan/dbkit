@@ -101,7 +101,7 @@ order_by_type = false
 
 [tool.pylint.BASIC]
 # Good variable names which should always be accepted, separated by a comma
-good-names = "n,i,j,k,_,fh,fd,fn,ip,cb,ts,ch,dt,tz,db,md,al,ns,s"
+good-names = "n,i,j,k,_,fh,fd,fn,ip,cb,ts,ch,dt,tz,db,md,al,ns,s,tp,tb"
 max-line-length = "120"
 exclude-protected = "_flatten"
 # There something broken with the import checks with this module. I think it's
@@ -110,7 +110,7 @@ ignored-modules = "sqlite3"
 extension-pkg-allow-list = "fcntl"
 
 [tool.pylint."MESSAGE CONTROL"]
-disable = "R,C0114,C0115,C0116,raise-missing-from"
+disable = "R,C0114,C0115,C0116,raise-missing-from,W0511,W0703"
 
 [tool.pytest.ini_options]
 minversion = "6.0"

@@ -801,7 +801,7 @@ class FactoryBase:
             # Taken from six.reraise:
             try:
                 if value is None:
-                    value = tp()
+                    value = tp()  # pylint: disable=E1102
                 if value.__traceback__ is not tb:
                     raise value.with_traceback(tb)
                 raise value
