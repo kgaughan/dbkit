@@ -10,26 +10,16 @@ database driver support for connection pooling.
    drivers and above such as `psycopg2`.
 """
 
+import os.path
 import re
 import sqlite3
 import unicodedata
 
-import creole
-import web
+from bottle import abort, Bottle, redirect, request, run, static_file, view
 
 import dbkit
 
-urls = (
-    "/",
-    "Frontpage",
-    "/([-a-z0-9]+)/",
-    "Project",
-)
-
-app = web.application(urls, globals())
-render = web.template.render(
-    "templates", base="layout", globals={"creole2html": creole.creole2html}
-)
+app = Bottle()
 pool = dbkit.create_pool(sqlite3, 10, "notary.db")
 pool.default_factory = dbkit.dict_set
 
@@ -97,6 +87,14 @@ def get_notes(project_id):
     )
 
 
+@app.get("/static/<filepath:path>")
+def server_static(filepath):
+    return static_file(
+        filepath,
+        root=os.path.join(os.path.dirname(__file__), "static"),
+    )
+
+
 @dbkit.transactional
 def save_note(project_id, note):
     dbkit.execute(
@@ -108,42 +106,47 @@ def save_note(project_id, note):
     return dbkit.last_row_id()
 
 
-class Frontpage(object):
-    def GET(self):
-        with pool.connect():
-            projects = list(get_projects())
-        return render.frontpage(projects=projects)
-
-    def POST(self):
-        form = web.input(project="")
-        with pool.connect():
-            _, slug = add_project(form.project)
-        raise web.seeother(f"{slug}/")
+@app.get("/")
+@view("frontpage")
+def show_index():
+    with pool.connect():
+        return dict(projects=list(get_projects()))
 
 
-class Project(object):
-    def GET(self, slug):
-        with pool.connect():
-            project = get_project(slug)
-            if not project:
-                raise web.notfound("No such project.")
-            notes = list(get_notes(project.project_id))
-        return render.project(project=project, notes=notes)
+@app.post("/")
+def post_index():
+    project = request.forms.get("project")
+    with pool.connect():
+        _, slug = add_project(project)
+    redirect(f"{slug}/")
 
-    def POST(self, slug):
-        form = web.input(note="")
-        with pool.connect():
-            if project := get_project(slug):
-                note_id = save_note(project.project_id, form.note)
-            else:
-                raise web.notfound("No such project.")
-        raise web.seeother(f"#p{str(note_id)}")
+
+@app.get("/<slug>/")
+@view("project")
+def show_project(slug):
+    with pool.connect():
+        project = get_project(slug)
+        if not project:
+            abort(404, "No such project.")
+        return dict(
+            project=project,
+            notes=list(get_notes(project.project_id)),
+        )
+
+
+@app.post("/<slug>/")
+def post_note(slug):
+    note = request.forms.get("note")
+    with pool.connect():
+        if project := get_project(slug):
+            note_id = save_note(project.project_id, note)
+        else:
+            abort(404, "No such project.")
+    redirect(f"#p{note_id}")
 
 
 if __name__ == "__main__":
     try:
-        app.run()
+        run(app, host="localhost", port=8080)
     finally:
         pool.finalise()
-else:
-    wsgi_app = app.wsgifunc()

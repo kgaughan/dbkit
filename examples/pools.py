@@ -1,16 +1,7 @@
+from bottle import route, run, template
 import psycopg2
-import pystache
-import web
 
 from dbkit import dict_set, execute, Pool, query, query_value, transactional
-
-urls = (
-    "/(.*)",
-    "hello",
-)
-app = web.application(urls, globals())
-pool = Pool(psycopg2, 2, "dbname=namecounter user=keith")
-
 
 TEMPLATE = """<!DOCTYPE html>
 <html>
@@ -21,12 +12,15 @@ TEMPLATE = """<!DOCTYPE html>
         <p>Hello, {{name}}!</p>
         <p>Previously, I've said hello to:</p>
         <ul>
-        {{#hellos}}
-            <li>{{name}}, {{n}} times</li>
-        {{/hellos}}
+        % for item in hellos
+            <li>{{item.name}}, {{item.n}} times</li>
+        % end
         </ul>
     </body>
 </html>"""
+
+
+pool = Pool(psycopg2, 2, "dbname=namecounter user=keith")
 
 
 @transactional
@@ -41,19 +35,19 @@ def get_names():
     return query("SELECT name, n FROM greeted ORDER BY n", factory=dict_set)
 
 
-class hello:
-    def GET(self, name):
-        ctx = pool.connect()
-        if not name:
-            name = "World"
-        with ctx:
-            hellos = list(get_names())
-            save_name(name)
-        return pystache.render(TEMPLATE, {"name": name, "hellos": hellos})
+@route("/<name>")
+def index(name):
+    ctx = pool.connect()
+    if not name:
+        name = "World"
+    with ctx:
+        hellos = list(get_names())
+        save_name(name)
+    return template(TEMPLATE, name=name, hellos=hellos)
 
 
 if __name__ == "__main__":
     try:
-        app.run()
+        run(host="localhost", port=8080)
     finally:
         pool.finalise()
