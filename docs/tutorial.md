@@ -106,12 +106,12 @@ you call `dbkit.query` using the `factory` parameter:
     def dump_counter_dict():
         return query(
             'SELECT counter, value FROM counters',
-            factory=dict_set)
+            factory=DictFactory)
 
-`dbkit.dict_set` is a row factory that generates a result set where each row is
-a dictionary. The default row factory is `dbkit.tuple_set`, which yields tuples
-for each row in the result set. Using `dbkit.dict_set`, we'd print the counters
-and values like so:
+`dbkit.DictFactory` is a row factory that generates a result set where each row
+is a dictionary. The default row factory is `dbkit.TupleFactory`, which yields
+tuples for each row in the result set. Using `dbkit.DictFactory`, we'd print
+the counters and values like so:
 
     def print_counters_and_values():
         for row in dump_counters_dict():

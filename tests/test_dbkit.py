@@ -265,7 +265,7 @@ class TestAgainstDB(unittest.TestCase):
             self.assertEqual(dbkit.query_value(GET_COUNTER, ("foo",)), 42)
 
     def test_factory(self):
-        self.ctx.default_factory = dbkit.dict_set
+        self.ctx.default_factory = dbkit.DictFactory
         with self.ctx:
             row = dbkit.query_row(
                 """

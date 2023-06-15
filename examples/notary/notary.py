@@ -21,7 +21,7 @@ import dbkit
 
 app = Bottle()
 pool = dbkit.create_pool(sqlite3, 10, "notary.db")
-pool.default_factory = dbkit.dict_set
+pool.default_factory = dbkit.DictFactory
 
 
 def strip_accents(s):

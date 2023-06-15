@@ -1,7 +1,7 @@
 from bottle import route, run, template
 import psycopg2
 
-from dbkit import dict_set, execute, Pool, query, query_value, transactional
+from dbkit import DictFactory, execute, Pool, query, query_value, transactional
 
 TEMPLATE = """<!DOCTYPE html>
 <html>
@@ -32,7 +32,7 @@ def save_name(name):
 
 
 def get_names():
-    return query("SELECT name, n FROM greeted ORDER BY n", factory=dict_set)
+    return query("SELECT name, n FROM greeted ORDER BY n", factory=DictFactory)
 
 
 @route("/<name>")
