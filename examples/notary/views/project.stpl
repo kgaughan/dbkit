@@ -1,12 +1,12 @@
-$def with (project, notes)
-
-$var title: Notes for $project.project
+% rebase("layout.stpl", title="Projects")
+% from creole import creole2html
 
 <p><a href="..">&#8592; Back to projects</a></p>
 
-$if project.overview:
+% if project.overview:
 	<h2>Overview</h2>
-	<div class="overview">$:creole2html(project.overview)</div>
+	<div class="overview">{{!creole2html(project.overview)}}</div>
+% end
 
 <h2>Notes</h2>
 
@@ -15,10 +15,12 @@ $if project.overview:
 <div><input type="submit" value="Post"></div>
 </form>
 
-$for note in notes:
+% for note in notes:
 	<div class="note">
 	<a href="#p$note.note_id" name="p$note.note_id" class="pnum">&para;</a>
-	$:creole2html(note.note)
+	{{!creole2html(note.note)}}
 	</div>
-$if not notes:
+% end
+% if not notes:
 	<p><em>No notes!</em></p>
+% end

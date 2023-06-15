@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{title or "Notary"}}</title>
+		<link rel="stylesheet" type="text/css" media="all" href="/static/style.css">
+	</head>
+	<body>
+		<h1>{{title or "Notary"}}</h1>
+		{{!base}}
+	</body>
+</html>

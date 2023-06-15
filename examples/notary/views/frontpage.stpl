@@ -1,15 +1,14 @@
-$def with (projects)
+% rebase("layout.stpl", title="Projects")
 
-$var title: Projects
-
-$if projects:
+% if projects:
 	<ul>
-	$for project in projects:
-		<li><a href="$project.slug/">$project.project</a>
-		($project.notes)</li>
+	% for project in projects:
+		<li><a href="{{project.slug}}/">{{project.project}}</a> ({{project.notes}})</li>
+	% end
 	</ul>
-$else:
+% else:
 	<p><em>No projects!</em></p>
+% end
 
 <form action="" method="post">
 	<div><label>Project: <input type="text" name="project"></label></div>
