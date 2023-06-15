@@ -5,8 +5,10 @@
 A command line tool for manipulating and querying bunch of counters stored in
 an SQLite database. This demonstrates basic use of dbkit.
 
-```{.literalinclude linenos=""}
-../examples/counters.py
+```py
+--8<--
+examples/counters.py
+--8<--
 ```
 
 ## pools.py {#pools-py-example}
@@ -19,6 +21,8 @@ a particular name.
 
 This demonstrates use of connection pools.
 
-```{.literalinclude linenos=""}
-../examples/pools.py
+```py
+--8<--
+examples/pools.py
+--8<--
 ```

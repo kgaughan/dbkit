@@ -29,9 +29,17 @@ plugins:
 
 markdown_extensions:
   - admonition
-  - smarty
-  - sane_lists
   - attr_list
+  - footnotes
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - sane_lists
+  - smarty
 
 nav:
   - Home: index.md
