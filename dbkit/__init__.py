@@ -801,7 +801,7 @@ class FactoryBase:
             # Taken from six.reraise:
             try:
                 if value is None:
-                    value = tp()
+                    value = tp()  # pylint: disable=E1102
                 if value.__traceback__ is not tb:
                     raise value.with_traceback(tb)
                 raise value
@@ -873,11 +873,6 @@ class ColumnFactory(FactoryBase):
         if row is None:
             raise StopIteration
         return row[0]
-
-
-# For backwards compatibility
-dict_set = DictFactory  # pylint: disable=C0103
-tuple_set = TupleFactory  # pylint: disable=C0103
 
 
 class AttrDict(dict):
