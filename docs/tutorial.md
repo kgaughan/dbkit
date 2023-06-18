@@ -43,13 +43,13 @@ value = query_value(
 
 And we don't need to worry about the database connection we're actually dealing
 with. With that in mind, here's how we'd implement getting a counter's value
-with `dbkit.query_value`:
+with [dbkit.query_value][]:
 
 ```python
 --8<-- "examples/counters.py:get_counter"
 ```
 
-To perform updates, there's the `dbkit.execute` function. Here's how we
+To perform updates, there's the [dbkit.execute][] function. Here's how we
 increment a counter's value:
 
 ```python
@@ -60,8 +60,9 @@ execute(
 ```
 
 dbkit also makes dealing with transactions very easy. It provides two
-mechanisms: the `dbkit.transaction` context manager and `dbkit.transactional`
-decorator. Let's implement incrementing the counter using the context manager:
+mechanisms: the [dbkit.transaction][] context manager and
+[dbkit.transactional][] decorator. Let's implement incrementing the counter
+using the context manager:
 
 ```python
 def increment_counter(counter, by):
@@ -92,7 +93,7 @@ Deleting a counter:
 ```
 
 dbkit also has ways to query for result sets. Once of these is
-`dbkit.query_column`, which returns an iterable of the first column in the
+[dbkit.query_column][], which returns an iterable of the first column in the
 result set. Thus, to get a list of counters, we'd do this:
 
 ```python
@@ -100,7 +101,7 @@ result set. Thus, to get a list of counters, we'd do this:
 ```
 
 One last thing that our tool ought to be able to do is dump the contents of the
-_counters_ table. To do this, we can use `dbkit.query`:
+_counters_ table. To do this, we can use [dbkit.query][]:
 
 ```python
 --8<-- "examples/counters.py:dump_counters"
@@ -114,7 +115,7 @@ This will return a sequence of result set rows you can iterate over like so:
 
 By default, `query()` will use tuples for each result set row, but if you'd
 prefer dictionaries, all you have to do is pass in a different row factory when
-you call `dbkit.query` using the `factory` parameter:
+you call [dbkit.query][] using the `factory` parameter:
 
 ```python
 def dump_counter_dict():
@@ -124,10 +125,10 @@ def dump_counter_dict():
     )
 ```
 
-`dbkit.DictFactory` is a row factory that generates a result set where each row
-is a dictionary. The default row factory is `dbkit.TupleFactory`, which yields
-tuples for each row in the result set. Using `dbkit.DictFactory`, we'd print
-the counters and values like so:
+[dbkit.DictFactory][] is a row factory that generates a result set where each
+row is a dictionary. The default row factory is [dbkit.TupleFactory][], which
+yields tuples for each row in the result set. Using [dbkit.DictFactory][], we'd
+print the counters and values like so:
 
 ```python
 def print_counters_and_values():
@@ -139,7 +140,7 @@ Now we have enough for our counter management application, so lets start on the
 main function. We'll have the following subcommands: `set`, `get`, `del`,
 `list`, `incr`, `list`, and `dump`. The `dispatch()` function below deals with
 calling the right function based on the command line arguments, so all we need
-to create a database connection context with `dbkit.connect`. It takes the
+to create a database connection context with [dbkit.connect][]. It takes the
 database driver module as its first argument, and any parameters you'd pass to
 that module's `connect()` function to create a new connection as its remaining
 arguments:

@@ -28,6 +28,16 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/kgaughan/dbkit/"
 
+[project.optional-dependencies]
+docs = [
+	"mkdocs-material==9.1.15",
+	"mkdocs-autorefs==0.4.1",
+	"mkdocstrings[python]==0.20.0",
+	"mkdocs-redirects==1.2.0",
+	"pymdown-extensions==10.0.1",
+	"Pygments==2.15.1",
+]
+
 [tool.hatch.version]
 path = "dbkit/__init__.py"
 
@@ -81,14 +91,7 @@ fmt = [
 ]
 
 [tool.hatch.envs.docs]
-dependencies = [
-	"mkdocs-material==9.1.15",
-	"mkdocs-autorefs==0.4.1",
-	"mkdocstrings[python]==0.20.0",
-	"mkdocs-redirects==1.2.0",
-	"pymdown-extensions==10.0.1",
-	"Pygments==2.15.1",
-]
+features = ["docs"]
 
 [tool.hatch.envs.docs.scripts]
 build = [
