@@ -8,10 +8,11 @@ edit_uri: blob/master/docs/
 theme:
   name: material
 
+watch:
+  - dbkit
+
 plugins:
   - mkdocstrings:
-      watch:
-        - dbkit
       default_handler: python
       handlers:
         python:

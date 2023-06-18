@@ -10,6 +10,7 @@ import sys
 from dbkit import connect, execute, query, query_column, query_value, transactional
 
 
+# --8<-- [start:get_counter]
 def get_counter(counter):
     """
     Get the value of a counter.
@@ -21,6 +22,9 @@ def get_counter(counter):
             default=0,
         )
     )
+
+
+# --8<-- [end:get_counter]
 
 
 @transactional
@@ -39,6 +43,7 @@ def increment_counter(counter, by):
     execute("UPDATE counters SET value = value + ? WHERE counter = ?", (by, counter))
 
 
+# --8<-- [start:delete_counter]
 @transactional
 def delete_counter(counter):
     """
@@ -47,6 +52,10 @@ def delete_counter(counter):
     execute("DELETE FROM counters WHERE counter = ?", (counter,))
 
 
+# --8<-- [end:delete_counter]
+
+
+# --8<-- [start:list_counters]
 def list_counters():
     """
     List the names of all the stored counters.
@@ -54,6 +63,10 @@ def list_counters():
     print("\n".join(query_column("SELECT counter FROM counters")))
 
 
+# --8<-- [end:list_counters]
+
+
+# --8<-- [start:dump_counters]
 def dump_counters():
     """
     Query the database for all counters and their values.
@@ -61,6 +74,10 @@ def dump_counters():
     return query("SELECT counter, value FROM counters")
 
 
+# --8<-- [end:dump_counters]
+
+
+# --8<-- [start:print_counters_and_values]
 def print_counters_and_values():
     """
     List all the counters and their values.
@@ -69,6 +86,10 @@ def print_counters_and_values():
         print(f"{counter}: {value}")
 
 
+# --8<-- [end:print_counters_and_values]
+
+
+# --8<-- [start:print_help]
 def print_help(filename, table, dest=sys.stdout):
     """
     Print help to the given destination file object.
@@ -77,6 +98,10 @@ def print_help(filename, table, dest=sys.stdout):
     print(f"Syntax: {path.basename(filename)} {cmds} [args]", file=dest)
 
 
+# --8<-- [end:print_help]
+
+
+# --8<-- [start:dispatch]
 def dispatch(table, args):
     """
     Dispatches to a function based on the contents of `args`.
@@ -105,6 +130,10 @@ def dispatch(table, args):
     sig[0](*fixed_args)
 
 
+# --8<-- [end:dispatch]
+
+
+# --8<-- [start:main]
 def main():
     # This table tells us the subcommands, the functions to dispatch to,
     # and their signatures.
@@ -119,6 +148,9 @@ def main():
     with connect(sqlite3, "counters.sqlite") as ctx:
         with closing(ctx):
             dispatch(command_table, sys.argv)
+
+
+# --8<-- [end:main]
 
 
 if __name__ == "__main__":

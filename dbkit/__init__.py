@@ -581,60 +581,23 @@ def transaction():
     Sets up a context where all the statements within it are ran within a
     single database transaction.
 
-    Here's a rough example of how you'd use it::
+    Here's a rough example of how you'd use it:
 
-        import sqlite3
-        import sys
-        from dbkit import connect, transaction, query_value, execute
+    ```python
+    import sqlite3
+    import sys
+    from dbkit import connect, transaction, query_value, execute
 
-        # ...do some stuff...
+    # ...do some stuff...
 
-        with connect(sqlite3, '/path/to/my.db') as ctx:
-            try:
-                change_ownership(page_id, new_owner_id)
-            catch ctx.IntegrityError:
-                print("Naughty!", file=sys.stderr)
+    with connect(sqlite3, '/path/to/my.db') as ctx:
+        try:
+            change_ownership(page_id, new_owner_id)
+        catch ctx.IntegrityError:
+            print("Naughty!", file=sys.stderr)
 
-        def change_ownership(page_id, new_owner_id):
-            with transaction():
-                old_owner_id = query_value(
-                    "SELECT owner_id FROM pages WHERE page_id = ?",
-                    (page_id,))
-                execute(
-                    "UPDATE users SET owned = owned - 1 WHERE id = ?",
-                    (old_owner_id,))
-                execute(
-                    "UPDATE users SET owned = owned + 1 WHERE id = ?",
-                    (new_owner_id,))
-                execute(
-                    "UPDATE pages SET owner_id = ? WHERE page_id = ?",
-                    (new_owner_id, page_id))
-    """
-    return Context.current().transaction()
-
-
-def transactional(wrapped):
-    """
-    A decorator to denote that the content of the decorated function or method
-    is to be ran in a transaction.
-
-    The following code is equivalent to the example for
-    :py:func:`dbkit.transaction`::
-
-        import sqlite3
-        import sys
-        from dbkit import connect, transactional, query_value, execute
-
-        # ...do some stuff...
-
-        with connect(sqlite3, '/path/to/my.db') as ctx:
-            try:
-                change_ownership(page_id, new_owner_id)
-            catch ctx.IntegrityError:
-                print("Naughty!", file=sys.stderr)
-
-        @transactional
-        def change_ownership(page_id, new_owner_id):
+    def change_ownership(page_id, new_owner_id):
+        with transaction():
             old_owner_id = query_value(
                 "SELECT owner_id FROM pages WHERE page_id = ?",
                 (page_id,))
@@ -647,6 +610,47 @@ def transactional(wrapped):
             execute(
                 "UPDATE pages SET owner_id = ? WHERE page_id = ?",
                 (new_owner_id, page_id))
+    ```
+    """
+    return Context.current().transaction()
+
+
+def transactional(wrapped):
+    """
+    A decorator to denote that the content of the decorated function or method
+    is to be ran in a transaction.
+
+    The following code is equivalent to the example for
+    [dbkit.transaction]:
+
+    ```python
+    import sqlite3
+    import sys
+    from dbkit import connect, transactional, query_value, execute
+
+    # ...do some stuff...
+
+    with connect(sqlite3, '/path/to/my.db') as ctx:
+        try:
+            change_ownership(page_id, new_owner_id)
+        catch ctx.IntegrityError:
+            print("Naughty!", file=sys.stderr)
+
+    @transactional
+    def change_ownership(page_id, new_owner_id):
+        old_owner_id = query_value(
+            "SELECT owner_id FROM pages WHERE page_id = ?",
+            (page_id,))
+        execute(
+            "UPDATE users SET owned = owned - 1 WHERE id = ?",
+            (old_owner_id,))
+        execute(
+            "UPDATE users SET owned = owned + 1 WHERE id = ?",
+            (new_owner_id,))
+        execute(
+            "UPDATE pages SET owner_id = ? WHERE page_id = ?",
+            (new_owner_id, page_id))
+    ```
     """
 
     # pylint: disable-msg=C0111
