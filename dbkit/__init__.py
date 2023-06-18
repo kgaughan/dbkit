@@ -548,7 +548,7 @@ def connect(module, *args, **kwargs):
     """
     Connect to a database using the given DB-API driver module. Returns a
     database context representing that connection. Any arguments or keyword
-    arguments are passed the module's :py:func:`connect` function.
+    arguments are passed the driver module's connect() function.
     """
     mdr = SingleConnectionMediator(module, _make_connect(module, args, kwargs))
     return Context(module, mdr)
@@ -621,7 +621,7 @@ def transactional(wrapped):
     is to be ran in a transaction.
 
     The following code is equivalent to the example for
-    [dbkit.transaction]:
+    [dbkit.transaction][]:
 
     ```python
     import sqlite3

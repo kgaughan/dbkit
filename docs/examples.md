@@ -13,8 +13,7 @@ examples/counters.py
 
 ## pools.py {#pools-py-example}
 
-A small web application, built using [web.py](http://webpy.org/),
-[pystache](https://github.com/defunkt/pystache), and
+A small web application, built using [Bottle](bottlepy.org/) and
 [psycopg2](http://initd.org/psycopg/), to say that prints "Hello, *name*"
 based on the URL fetched, and which records how many times it's said hello to
 a particular name.

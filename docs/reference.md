@@ -7,7 +7,7 @@
 ## Contexts
 
 Contexts wrap a notional database connection. They're returned by the
-`dbkit.connect` function. Methods are for the internal use of dbkit only though
+[dbkit.connect][] function. Methods are for the internal use of dbkit only though
 it does expose a method for closing the database connection when you're done
 with it and contains references for each of the exceptions exposed by the
 connection's database driver. For a list of these exceptions, see
@@ -65,9 +65,9 @@ Result generators are generator functions that are used internally by dbkit to
 take the results from a database cursor and turn them into a form that's easier
 to deal with programmatically, such a sequence of tuples or a sequence of
 dictionaries, where each tuple or dictionary represents a row of the result
-set. By default, `dbkit.TupleFactory` is used as the result generator, but you
-can change this by assigning another, such as `dbkit.DictFactory` to
-`dbkit.Context.default_factory` function.
+set. By default, [dbkit.TupleFactory][] is used as the result generator, but you
+can change this by assigning another, such as [dbkit.DictFactory][] to
+[dbkit.Context.default_factory][] function.
 
 Some query functions allow you to specify the result generator to be used for
 the result, which is passed in using the `factory` parameter.
