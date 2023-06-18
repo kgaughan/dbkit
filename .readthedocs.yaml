@@ -17,4 +17,4 @@ mkdocs:
 python:
   install:
     - method: pip
-      path: .
+      path: .[docs]
