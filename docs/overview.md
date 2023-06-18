@@ -7,11 +7,9 @@
 ## Introduction
 
 *dbkit* is intended to be used in circumstances where it is impractical or
-overkill to use an ORM such as [SQLObject] or [SQLAlchemy], but it would be
-useful to at least abstract away some of the pain involved in dealing with the
-database.
+overkill to use an ORM such as [SQLAlchemy], but it would be useful to at least
+abstract away some of the pain involved in dealing with the database.
 
-[SQLObject]: http://sqlobject.org/
 [SQLAlchemy]: http://sqlalchemy.org/
 
 Features:
@@ -32,9 +30,8 @@ Features:
 Non-aims:
 
 -   Abstraction of SQL statements. The idea is to get rid of the more
-    annoying but necessary boilerplate code involved in dealing with
-    [DB-API 2] drivers, not to
-    totally abstract away SQL itself.
+    annoying but necessary boilerplate code involved in dealing with [DB-API 2]
+    drivers, not to totally abstract away SQL itself.
 
 [context]: http://docs.python.org/library/contextlib.html
 

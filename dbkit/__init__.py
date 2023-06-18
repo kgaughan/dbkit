@@ -2,8 +2,8 @@
 **dbkit** is a simple high-level database abstraction library for use on top of
 DB-API 2 compatible database driver modules. It is intended to be used in
 circumstances where it would be impractical or overkill to use an ORM such as
-SQLAlchemy or SQLObject, but would be useful to abstract away much of the
-boilerplate involved in dealing with DB-API 2 compatible database drivers.
+SQLAlchemy, but would be useful to abstract away much of the boilerplate
+involved in dealing with DB-API 2 compatible database drivers.
 """
 
 from __future__ import print_function
@@ -37,7 +37,7 @@ __all__ = (
     "TupleFactory",
 )
 
-__version__ = "0.2.5"
+__version__ = "0.3.0"
 
 
 # DB-API 2 exceptions exposed by all drivers.

@@ -1,5 +1,12 @@
 # Change history
 
+## 0.3.0 (2023-06-18) {#version-0.3.0}
+
+-   Modernisation of the internals and tooling. It now requires a minimum of
+    Python 3.8 to to being converted over to using Hatch. The documentation is
+    now managed using mkdocs.
+-   Removal of legacy aliases for row factories.
+
 ## 0.2.5 (2016-04-15) {#version-0.2.5}
 
 -   Minor fixes and cleanup, including getting rid of a nose dependency.
