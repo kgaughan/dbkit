@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "dbkit"
 dynamic = ["version"]
 description = "DB-API made easier"
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">= 3.8"
 license = "MIT"
 authors = [
