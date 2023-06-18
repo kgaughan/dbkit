@@ -91,11 +91,15 @@ fmt = [
 ]
 
 [tool.hatch.envs.docs]
+dependencies = []
 features = ["docs"]
 
 [tool.hatch.envs.docs.scripts]
 build = [
 	"mkdocs build",
+]
+serve = [
+	"mkdocs serve",
 ]
 
 [tool.isort]
